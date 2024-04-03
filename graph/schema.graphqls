@@ -1,0 +1,95 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+scalar Url
+scalar Time
+
+enum Role {
+  ADMIN
+  CONTRIBUTOR
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  password: String!
+  role: Role!
+  createdAt: Time!
+  updatedAt: Time!
+  deletedAt: Time
+}
+
+type Item {
+  id: ID!
+  name: String!
+  quantity: Int!
+  createdAt: Time!
+  updatedAt: Time!
+  deletedAt: Time
+}
+
+type Order {
+  id: ID!
+  items: [OrderItem!]!
+  invoiceURL: Url
+  createdAt: Time!
+  updatedAt: Time!
+  deletedAt: Time
+}
+
+type OrderItem {
+  id: ID!
+  name: String!
+  quantity: Int!
+  createdAt: Time!
+  updatedAt: Time!
+  deletedAt: Time
+}
+
+type SchoolItem {
+  id: ID!
+  name: String!
+  quantity: Int!
+  createdAt: Time!
+  updatedAt: Time!
+  deletedAt: Time
+}
+
+type SchoolOrder {
+  id: ID!
+  school: School
+  items: [SchoolItem!]!
+  deliveredAt: Time
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type School {
+  id: ID!
+  name: String!
+  address: String
+  phoneNumber: String
+  orders: [Order!]!
+  createdAt: Time!
+  updatedAt: Time!
+  deletedAt: Time
+}
+
+type Query {
+  me: User
+  items: [Item!]!
+  schools: [School!]!
+  orders: [Order!]!
+}
+
+input CreateUserInput {
+  email: String!
+  name: String!
+  password: String!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User
+}

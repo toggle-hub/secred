@@ -1,0 +1,55 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./.docker/golang/Dockerfile
+    volumes:
+      - ./:/usr/src/app
+    container_name: secred-api
+    env_file:
+      - ./.env
+    environment:
+      - PORT=8080
+      - DB_HOST=postgres
+      - DB_USER=root
+      - DB_PASSWORD=root
+      - DB_NAME=secred
+      - DB_SLL_MODE=disable
+    ports:
+      - "8080:8080"
+    networks:
+      - secred
+    stdin_open: true
+    tty: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    networks:
+      - secred
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: secred
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # pgadmin:
+  #   image: dpage/pgadmin4
+  #   depends_on:
+  #     - postgres
+  #   ports:
+  #     - 5050:80
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin
+networks:
+  secred:
+    driver: bridge
