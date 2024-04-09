@@ -5,17 +5,10 @@
 scalar Url
 scalar Time
 
-enum Role {
-  ADMIN
-  CONTRIBUTOR
-}
-
 type User {
   id: ID!
   name: String!
   email: String!
-  password: String!
-  role: Role!
   createdAt: Time!
   updatedAt: Time!
   deletedAt: Time
@@ -41,8 +34,8 @@ type Order {
 
 type OrderItem {
   id: ID!
-  name: String!
   quantity: Int!
+  item: Item!
   createdAt: Time!
   updatedAt: Time!
   deletedAt: Time
@@ -57,13 +50,23 @@ type SchoolItem {
   deletedAt: Time
 }
 
+type SchoolOrderItem {
+  id: ID!
+  name: String!
+  quantity: Int!
+  createdAt: Time!
+  updatedAt: Time!
+  deletedAt: Time
+}
+
 type SchoolOrder {
   id: ID!
   school: School
-  items: [SchoolItem!]!
-  deliveredAt: Time
+  items: [SchoolOrderItem!]!
   createdAt: Time!
   updatedAt: Time!
+  deliveredAt: Time
+  deletedAt: Time
 }
 
 type School {

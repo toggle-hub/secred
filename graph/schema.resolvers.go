@@ -9,16 +9,44 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/xsadia/secred/graph/model"
+	"github.com/xsadia/secred/pkg/utils"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
+	var emailExists bool
+	err := r.DB.QueryRow("SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)", input.Email).Scan(&emailExists)
+
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	if emailExists {
+		return nil, gqlerror.Errorf("email already in use")
+	}
+
+	hash, err := utils.HashPassword(input.Password)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	var id uuid.UUID
+
+	err = r.DB.QueryRow(
+		"INSERT INTO users (name, email, password) values ($1, $2, $3) returning id",
+		input.Name, input.Email, hash).Scan(&id)
+
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
 	return &model.User{
+		ID:        id.String(),
 		Name:      input.Name,
 		Email:     input.Email,
-		Password:  input.Password,
-		Role:      model.RoleAdmin,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 		DeletedAt: nil,

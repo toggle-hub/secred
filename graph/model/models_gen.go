@@ -3,9 +3,6 @@
 package model
 
 import (
-	"fmt"
-	"io"
-	"strconv"
 	"time"
 )
 
@@ -38,8 +35,8 @@ type Order struct {
 
 type OrderItem struct {
 	ID        string     `json:"id"`
-	Name      string     `json:"name"`
 	Quantity  int        `json:"quantity"`
+	Item      *Item      `json:"item"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
@@ -69,62 +66,29 @@ type SchoolItem struct {
 }
 
 type SchoolOrder struct {
-	ID          string        `json:"id"`
-	School      *School       `json:"school,omitempty"`
-	Items       []*SchoolItem `json:"items"`
-	DeliveredAt *time.Time    `json:"deliveredAt,omitempty"`
-	CreatedAt   time.Time     `json:"createdAt"`
-	UpdatedAt   time.Time     `json:"updatedAt"`
+	ID          string             `json:"id"`
+	School      *School            `json:"school,omitempty"`
+	Items       []*SchoolOrderItem `json:"items"`
+	CreatedAt   time.Time          `json:"createdAt"`
+	UpdatedAt   time.Time          `json:"updatedAt"`
+	DeliveredAt *time.Time         `json:"deliveredAt,omitempty"`
+	DeletedAt   *time.Time         `json:"deletedAt,omitempty"`
+}
+
+type SchoolOrderItem struct {
+	ID        string     `json:"id"`
+	Name      string     `json:"name"`
+	Quantity  int        `json:"quantity"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 }
 
 type User struct {
 	ID        string     `json:"id"`
 	Name      string     `json:"name"`
 	Email     string     `json:"email"`
-	Password  string     `json:"password"`
-	Role      Role       `json:"role"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
-}
-
-type Role string
-
-const (
-	RoleAdmin       Role = "ADMIN"
-	RoleContributor Role = "CONTRIBUTOR"
-)
-
-var AllRole = []Role{
-	RoleAdmin,
-	RoleContributor,
-}
-
-func (e Role) IsValid() bool {
-	switch e {
-	case RoleAdmin, RoleContributor:
-		return true
-	}
-	return false
-}
-
-func (e Role) String() string {
-	return string(e)
-}
-
-func (e *Role) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = Role(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid Role", str)
-	}
-	return nil
-}
-
-func (e Role) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
 }

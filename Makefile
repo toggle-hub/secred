@@ -4,7 +4,7 @@ gen-graphql:
 	@go run github.com/99designs/gqlgen generate
 
 run:
-	@go run ./server.go
+	@go run ./cmd/server.go
 
 migratecreate:
 	migrate create -ext sql -dir migrations -seq $(name)

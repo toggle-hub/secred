@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS users, items, orders, order_items, schools, school_orders, school_items, school_order_items;

@@ -74,7 +74,7 @@ type ComplexityRoot struct {
 		CreatedAt func(childComplexity int) int
 		DeletedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
-		Name      func(childComplexity int) int
+		Item      func(childComplexity int) int
 		Quantity  func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
@@ -108,11 +108,21 @@ type ComplexityRoot struct {
 
 	SchoolOrder struct {
 		CreatedAt   func(childComplexity int) int
+		DeletedAt   func(childComplexity int) int
 		DeliveredAt func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Items       func(childComplexity int) int
 		School      func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
+	}
+
+	SchoolOrderItem struct {
+		CreatedAt func(childComplexity int) int
+		DeletedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Quantity  func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
 	}
 
 	User struct {
@@ -121,8 +131,6 @@ type ComplexityRoot struct {
 		Email     func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
-		Password  func(childComplexity int) int
-		Role      func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 	}
 }
@@ -273,12 +281,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrderItem.ID(childComplexity), true
 
-	case "OrderItem.name":
-		if e.complexity.OrderItem.Name == nil {
+	case "OrderItem.item":
+		if e.complexity.OrderItem.Item == nil {
 			break
 		}
 
-		return e.complexity.OrderItem.Name(childComplexity), true
+		return e.complexity.OrderItem.Item(childComplexity), true
 
 	case "OrderItem.quantity":
 		if e.complexity.OrderItem.Quantity == nil {
@@ -427,6 +435,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SchoolOrder.CreatedAt(childComplexity), true
 
+	case "SchoolOrder.deletedAt":
+		if e.complexity.SchoolOrder.DeletedAt == nil {
+			break
+		}
+
+		return e.complexity.SchoolOrder.DeletedAt(childComplexity), true
+
 	case "SchoolOrder.deliveredAt":
 		if e.complexity.SchoolOrder.DeliveredAt == nil {
 			break
@@ -462,6 +477,48 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SchoolOrder.UpdatedAt(childComplexity), true
 
+	case "SchoolOrderItem.createdAt":
+		if e.complexity.SchoolOrderItem.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.SchoolOrderItem.CreatedAt(childComplexity), true
+
+	case "SchoolOrderItem.deletedAt":
+		if e.complexity.SchoolOrderItem.DeletedAt == nil {
+			break
+		}
+
+		return e.complexity.SchoolOrderItem.DeletedAt(childComplexity), true
+
+	case "SchoolOrderItem.id":
+		if e.complexity.SchoolOrderItem.ID == nil {
+			break
+		}
+
+		return e.complexity.SchoolOrderItem.ID(childComplexity), true
+
+	case "SchoolOrderItem.name":
+		if e.complexity.SchoolOrderItem.Name == nil {
+			break
+		}
+
+		return e.complexity.SchoolOrderItem.Name(childComplexity), true
+
+	case "SchoolOrderItem.quantity":
+		if e.complexity.SchoolOrderItem.Quantity == nil {
+			break
+		}
+
+		return e.complexity.SchoolOrderItem.Quantity(childComplexity), true
+
+	case "SchoolOrderItem.updatedAt":
+		if e.complexity.SchoolOrderItem.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.SchoolOrderItem.UpdatedAt(childComplexity), true
+
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
 			break
@@ -496,20 +553,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Name(childComplexity), true
-
-	case "User.password":
-		if e.complexity.User.Password == nil {
-			break
-		}
-
-		return e.complexity.User.Password(childComplexity), true
-
-	case "User.role":
-		if e.complexity.User.Role == nil {
-			break
-		}
-
-		return e.complexity.User.Role(childComplexity), true
 
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
@@ -1014,10 +1057,6 @@ func (ec *executionContext) fieldContext_Mutation_createUser(ctx context.Context
 				return ec.fieldContext_User_name(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -1127,10 +1166,10 @@ func (ec *executionContext) fieldContext_Order_items(ctx context.Context, field 
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_OrderItem_id(ctx, field)
-			case "name":
-				return ec.fieldContext_OrderItem_name(ctx, field)
 			case "quantity":
 				return ec.fieldContext_OrderItem_quantity(ctx, field)
+			case "item":
+				return ec.fieldContext_OrderItem_item(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_OrderItem_createdAt(ctx, field)
 			case "updatedAt":
@@ -1358,50 +1397,6 @@ func (ec *executionContext) fieldContext_OrderItem_id(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _OrderItem_name(ctx context.Context, field graphql.CollectedField, obj *model.OrderItem) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OrderItem_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OrderItem_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OrderItem",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _OrderItem_quantity(ctx context.Context, field graphql.CollectedField, obj *model.OrderItem) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_OrderItem_quantity(ctx, field)
 	if err != nil {
@@ -1441,6 +1436,64 @@ func (ec *executionContext) fieldContext_OrderItem_quantity(ctx context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OrderItem_item(ctx context.Context, field graphql.CollectedField, obj *model.OrderItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OrderItem_item(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Item, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Item)
+	fc.Result = res
+	return ec.marshalNItem2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐItem(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OrderItem_item(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OrderItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Item_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Item_name(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Item_quantity(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Item_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Item_updatedAt(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_Item_deletedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Item", field.Name)
 		},
 	}
 	return fc, nil
@@ -1617,10 +1670,6 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 				return ec.fieldContext_User_name(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
-			case "password":
-				return ec.fieldContext_User_password(ctx, field)
-			case "role":
-				return ec.fieldContext_User_role(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_User_createdAt(ctx, field)
 			case "updatedAt":
@@ -2688,9 +2737,9 @@ func (ec *executionContext) _SchoolOrder_items(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.SchoolItem)
+	res := resTmp.([]*model.SchoolOrderItem)
 	fc.Result = res
-	return ec.marshalNSchoolItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolItemᚄ(ctx, field.Selections, res)
+	return ec.marshalNSchoolOrderItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolOrderItemᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SchoolOrder_items(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2702,60 +2751,19 @@ func (ec *executionContext) fieldContext_SchoolOrder_items(ctx context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_SchoolItem_id(ctx, field)
+				return ec.fieldContext_SchoolOrderItem_id(ctx, field)
 			case "name":
-				return ec.fieldContext_SchoolItem_name(ctx, field)
+				return ec.fieldContext_SchoolOrderItem_name(ctx, field)
 			case "quantity":
-				return ec.fieldContext_SchoolItem_quantity(ctx, field)
+				return ec.fieldContext_SchoolOrderItem_quantity(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_SchoolItem_createdAt(ctx, field)
+				return ec.fieldContext_SchoolOrderItem_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_SchoolItem_updatedAt(ctx, field)
+				return ec.fieldContext_SchoolOrderItem_updatedAt(ctx, field)
 			case "deletedAt":
-				return ec.fieldContext_SchoolItem_deletedAt(ctx, field)
+				return ec.fieldContext_SchoolOrderItem_deletedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type SchoolItem", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _SchoolOrder_deliveredAt(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrder) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_SchoolOrder_deliveredAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.DeliveredAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_SchoolOrder_deliveredAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "SchoolOrder",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
+			return nil, fmt.Errorf("no field named %q was found under type SchoolOrderItem", field.Name)
 		},
 	}
 	return fc, nil
@@ -2839,6 +2847,349 @@ func (ec *executionContext) _SchoolOrder_updatedAt(ctx context.Context, field gr
 func (ec *executionContext) fieldContext_SchoolOrder_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SchoolOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrder_deliveredAt(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrder_deliveredAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeliveredAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrder_deliveredAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrder_deletedAt(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrder) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrder_deletedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrder_deletedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrder",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrderItem_id(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrderItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrderItem_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrderItem_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrderItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrderItem_name(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrderItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrderItem_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrderItem_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrderItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrderItem_quantity(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrderItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrderItem_quantity(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Quantity, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrderItem_quantity(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrderItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrderItem_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrderItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrderItem_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrderItem_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrderItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrderItem_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrderItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrderItem_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrderItem_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrderItem",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SchoolOrderItem_deletedAt(ctx context.Context, field graphql.CollectedField, obj *model.SchoolOrderItem) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SchoolOrderItem_deletedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DeletedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SchoolOrderItem_deletedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SchoolOrderItem",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2976,94 +3327,6 @@ func (ec *executionContext) fieldContext_User_email(ctx context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_password(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_password(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Password, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_User_password(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _User_role(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_role(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Role, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(model.Role)
-	fc.Result = res
-	return ec.marshalNRole2githubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_User_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "User",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Role does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5201,13 +5464,13 @@ func (ec *executionContext) _OrderItem(ctx context.Context, sel ast.SelectionSet
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "name":
-			out.Values[i] = ec._OrderItem_name(ctx, field, obj)
+		case "quantity":
+			out.Values[i] = ec._OrderItem_quantity(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "quantity":
-			out.Values[i] = ec._OrderItem_quantity(ctx, field, obj)
+		case "item":
+			out.Values[i] = ec._OrderItem_item(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -5530,8 +5793,6 @@ func (ec *executionContext) _SchoolOrder(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deliveredAt":
-			out.Values[i] = ec._SchoolOrder_deliveredAt(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._SchoolOrder_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -5542,6 +5803,71 @@ func (ec *executionContext) _SchoolOrder(ctx context.Context, sel ast.SelectionS
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "deliveredAt":
+			out.Values[i] = ec._SchoolOrder_deliveredAt(ctx, field, obj)
+		case "deletedAt":
+			out.Values[i] = ec._SchoolOrder_deletedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var schoolOrderItemImplementors = []string{"SchoolOrderItem"}
+
+func (ec *executionContext) _SchoolOrderItem(ctx context.Context, sel ast.SelectionSet, obj *model.SchoolOrderItem) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, schoolOrderItemImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SchoolOrderItem")
+		case "id":
+			out.Values[i] = ec._SchoolOrderItem_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "name":
+			out.Values[i] = ec._SchoolOrderItem_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "quantity":
+			out.Values[i] = ec._SchoolOrderItem_quantity(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._SchoolOrderItem_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._SchoolOrderItem_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deletedAt":
+			out.Values[i] = ec._SchoolOrderItem_deletedAt(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5588,16 +5914,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "password":
-			out.Values[i] = ec._User_password(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "role":
-			out.Values[i] = ec._User_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -6174,16 +6490,6 @@ func (ec *executionContext) marshalNOrderItem2ᚖgithubᚗcomᚋxsadiaᚋsecred�
 	return ec._OrderItem(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRole2githubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐRole(ctx context.Context, v interface{}) (model.Role, error) {
-	var res model.Role
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNRole2githubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v model.Role) graphql.Marshaler {
-	return v
-}
-
 func (ec *executionContext) marshalNSchool2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.School) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -6238,7 +6544,7 @@ func (ec *executionContext) marshalNSchool2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋg
 	return ec._School(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNSchoolItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchoolItem) graphql.Marshaler {
+func (ec *executionContext) marshalNSchoolOrderItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolOrderItemᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SchoolOrderItem) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6262,7 +6568,7 @@ func (ec *executionContext) marshalNSchoolItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsec
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNSchoolItem2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolItem(ctx, sel, v[i])
+			ret[i] = ec.marshalNSchoolOrderItem2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolOrderItem(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6282,14 +6588,14 @@ func (ec *executionContext) marshalNSchoolItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsec
 	return ret
 }
 
-func (ec *executionContext) marshalNSchoolItem2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolItem(ctx context.Context, sel ast.SelectionSet, v *model.SchoolItem) graphql.Marshaler {
+func (ec *executionContext) marshalNSchoolOrderItem2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolOrderItem(ctx context.Context, sel ast.SelectionSet, v *model.SchoolOrderItem) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._SchoolItem(ctx, sel, v)
+	return ec._SchoolOrderItem(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

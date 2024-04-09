@@ -10,9 +10,11 @@ RUN go mod download && \
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o bin/app server.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o bin/app cmd/server.go
 
 FROM golang:1.20-alpine
+
+COPY --from=build /usr/src/app/migrations ./migrations/
 
 COPY --from=build /usr/src/app/bin/app .
 
