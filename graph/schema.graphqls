@@ -93,6 +93,11 @@ input CreateUserInput {
   password: String!
 }
 
+type CreateUserReturnType {
+  me: User
+  token: String
+}
+
 type Mutation {
-  createUser(input: CreateUserInput!): User
+  createUser(input: CreateUserInput!): CreateUserReturnType
 }

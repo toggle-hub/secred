@@ -6,7 +6,9 @@ package graph
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,7 +18,7 @@ import (
 )
 
 // CreateUser is the resolver for the createUser field.
-func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.User, error) {
+func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserReturnType, error) {
 	var emailExists bool
 	err := r.DB.QueryRow("SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)", input.Email).Scan(&emailExists)
 
@@ -43,19 +45,48 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	return &model.User{
-		ID:        id.String(),
-		Name:      input.Name,
-		Email:     input.Email,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-		DeletedAt: nil,
+	token, err := utils.CreateJWT(id, utils.JWTExpireTime)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	return &model.CreateUserReturnType{
+		Me: &model.User{
+			ID:        id.String(),
+			Name:      input.Name,
+			Email:     input.Email,
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+			DeletedAt: nil,
+		},
+
+		Token: &token,
 	}, nil
 }
 
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	panic(fmt.Errorf("not implemented: Me - me"))
+	id := ctx.Value("user")
+	if id == nil {
+		return nil, gqlerror.Errorf("Authorization required")
+	}
+
+	var user model.User
+	err := r.DB.QueryRow(
+		"SELECT id, name, email, created_at, updated_at, deleted_at FROM users where id = $1",
+		id,
+	).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
+
+	if err == nil {
+		return &user, nil
+	}
+
+	if err == sql.ErrNoRows {
+		log.Println(err)
+		return nil, gqlerror.Errorf("Authorization required")
+	}
+
+	return nil, gqlerror.Errorf("Unexpected error")
 }
 
 // Items is the resolver for the items field.

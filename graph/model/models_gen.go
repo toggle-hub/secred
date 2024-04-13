@@ -12,6 +12,11 @@ type CreateUserInput struct {
 	Password string `json:"password"`
 }
 
+type CreateUserReturnType struct {
+	Me    *User   `json:"me,omitempty"`
+	Token *string `json:"token,omitempty"`
+}
+
 type Item struct {
 	ID        string     `json:"id"`
 	Name      string     `json:"name"`
