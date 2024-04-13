@@ -10,6 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/xsadia/secred/pkg/database"
 	"github.com/xsadia/secred/pkg/handlers"
+	"github.com/xsadia/secred/pkg/middlewares"
 	"github.com/xsadia/secred/pkg/utils"
 )
 
@@ -41,8 +42,10 @@ func main() {
 	}
 
 	e := echo.New()
-	e.POST("graphql", handlers.GraphQLHandler(db))
+	e.POST("/graphql", handlers.GraphQLHandler(db))
 	e.GET("/", handlers.PlaygroundHandler())
+
+	e.Use(middlewares.AuthMiddleware)
 
 	log.Panic(e.Start(":" + port))
 }
