@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+type CreateSchoolInput struct {
+	Name        string  `json:"name"`
+	Address     *string `json:"address,omitempty"`
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
+}
+
 type CreateUserInput struct {
 	Email    string `json:"email"`
 	Name     string `json:"name"`

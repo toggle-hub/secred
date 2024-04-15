@@ -5,15 +5,14 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
 )
 
 const JWTExpireTime = 60 * 60 * 1000 * 24
 
-func CreateJWT(id uuid.UUID, expireAt time.Duration) (string, error) {
+func CreateJWT(id string, expireAt time.Duration) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"iss": "togglelabs",
-		"sub": id.String(),
+		"iss": "secred",
+		"sub": id,
 		"exp": time.Now().Add(expireAt * time.Millisecond).Unix(),
 	})
 
