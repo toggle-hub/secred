@@ -1,0 +1,9 @@
+{
+  "ignoreWords": [
+    "usermodel",
+     "schoolmodel",
+     "gqlerror",
+     "xsadia",
+     "secred"
+    ]
+}

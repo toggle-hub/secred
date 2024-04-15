@@ -7,81 +7,79 @@ package graph
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/xsadia/secred/graph/model"
+	schoolmodel "github.com/xsadia/secred/pkg/models/school_model"
+	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 	"github.com/xsadia/secred/pkg/utils"
 )
 
 // CreateUser is the resolver for the createUser field.
 func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUserInput) (*model.CreateUserReturnType, error) {
-	var emailExists bool
-	err := r.DB.QueryRow("SELECT EXISTS (SELECT 1 FROM users WHERE email = $1)", input.Email).Scan(&emailExists)
-
+	userModel := usermodel.New(r.DB)
+	user, err := userModel.Create(input)
 	if err != nil {
+		log.Println("Failed to create user")
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	if emailExists {
-		return nil, gqlerror.Errorf("email already in use")
-	}
-
-	hash, err := utils.HashPassword(input.Password)
+	token, err := utils.CreateJWT(user.ID, utils.JWTExpireTime)
 	if err != nil {
-		return nil, gqlerror.Errorf(err.Error())
-	}
-
-	var id uuid.UUID
-
-	err = r.DB.QueryRow(
-		"INSERT INTO users (name, email, password) values ($1, $2, $3) returning id",
-		input.Name, input.Email, hash).Scan(&id)
-
-	if err != nil {
-		return nil, gqlerror.Errorf(err.Error())
-	}
-
-	token, err := utils.CreateJWT(id, utils.JWTExpireTime)
-	if err != nil {
+		log.Println("Failed to create JWT")
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
 	return &model.CreateUserReturnType{
-		Me: &model.User{
-			ID:        id.String(),
-			Name:      input.Name,
-			Email:     input.Email,
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-			DeletedAt: nil,
-		},
-
+		Me:    user,
 		Token: &token,
 	}, nil
 }
 
+// CreateSchool is the resolver for the createSchool field.
+func (r *mutationResolver) CreateSchool(ctx context.Context, input model.CreateSchoolInput) (*model.School, error) {
+	id, err := utils.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	userModel := usermodel.New(r.DB)
+	_, err = userModel.FindById(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, gqlerror.Errorf("authorization required")
+		}
+
+		return nil, gqlerror.Errorf("unexpected error")
+	}
+
+	schoolModel := schoolmodel.New(r.DB)
+	school, err := schoolModel.Create(input)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	return school, nil
+}
+
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	id := ctx.Value("user")
-	if id == nil {
-		return nil, gqlerror.Errorf("Authorization required")
+	id, err := utils.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	var user model.User
-	err := r.DB.QueryRow(
-		"SELECT id, name, email, created_at, updated_at, deleted_at FROM users where id = $1",
-		id,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
+	userModel := usermodel.New(r.DB)
 
+	user, err := userModel.FindById(id)
 	if err == nil {
-		return &user, nil
+		return user, nil
 	}
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		log.Println(err)
 		return nil, gqlerror.Errorf("Authorization required")
 	}

@@ -98,6 +98,13 @@ type CreateUserReturnType {
   token: String
 }
 
+input CreateSchoolInput {
+  name: String!
+  address: String
+  phoneNumber: String
+}
+
 type Mutation {
   createUser(input: CreateUserInput!): CreateUserReturnType
+  createSchool(input: CreateSchoolInput!): School
 }
