@@ -13,6 +13,7 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/xsadia/secred/graph/model"
+	itemmodel "github.com/xsadia/secred/pkg/models/item_model"
 	schoolmodel "github.com/xsadia/secred/pkg/models/school_model"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 	"github.com/xsadia/secred/pkg/utils"
@@ -63,6 +64,32 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.CreateS
 	}
 
 	return school, nil
+}
+
+// CreateItem is the resolver for the createItem field.
+func (r *mutationResolver) CreateItem(ctx context.Context, input model.CreateItemInput) (*model.Item, error) {
+	id, err := utils.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	userModel := usermodel.New(r.DB)
+	_, err = userModel.FindById(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, gqlerror.Errorf("authorization required")
+		}
+
+		return nil, gqlerror.Errorf("unexpected error")
+	}
+
+	itemModel := itemmodel.New(r.DB)
+	item, err := itemModel.Create(input)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	return item, nil
 }
 
 // Me is the resolver for the me field.
