@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS items (
   id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
   name VARCHAR(255) NOT NULL UNIQUE,
+  raw_name VARCHAR(255) NOT NULL,
   quantity INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT now(),
   updated_at TIMESTAMP DEFAULT now(),

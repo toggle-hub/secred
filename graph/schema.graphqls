@@ -17,6 +17,7 @@ type User {
 type Item {
   id: ID!
   name: String!
+  rawName: String!
   quantity: Int!
   createdAt: Time!
   updatedAt: Time!
@@ -104,7 +105,13 @@ input CreateSchoolInput {
   phoneNumber: String
 }
 
+input CreateItemInput {
+  name: String!
+  quantity: Int!
+}
+
 type Mutation {
   createUser(input: CreateUserInput!): CreateUserReturnType
   createSchool(input: CreateSchoolInput!): School
+  createItem(input: CreateItemInput!): Item
 }

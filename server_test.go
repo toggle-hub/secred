@@ -16,6 +16,8 @@ import (
 	"github.com/xsadia/secred/graph"
 	"github.com/xsadia/secred/graph/model"
 	"github.com/xsadia/secred/pkg/database"
+	itemmodel "github.com/xsadia/secred/pkg/models/item_model"
+	schoolmodel "github.com/xsadia/secred/pkg/models/school_model"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 )
 
@@ -46,8 +48,20 @@ type CreateSchoolResponse struct {
 	CreateSchool
 }
 
+type CreateItem struct {
+	ID       string
+	Name     string
+	RawName  string
+	Typename string `json:"__typename"`
+	Quantity int
+}
+
+type CreateItemResponse struct {
+	CreateItem
+}
+
 type MeResponse struct {
-	Me Me
+	Me
 }
 
 type GqlError struct {
@@ -124,6 +138,178 @@ func (suite *SecredTestSuite) TestCreateSchoolSuccess() {
 		},
 	}
 
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestCreateSchoolUnauthorized() {
+	t := suite.T()
+
+	resp, err := suite.client.RawPost(`mutation {
+		createSchool(
+			input: {name: "CSC", address: "R. Frei Evaristo, n 91"}
+		) {
+			id
+			name
+			address
+			phoneNumber
+			orders {
+				id
+			}
+			__typename
+		}
+	}`)
+
+	require.NoError(t, err)
+	var actual []GqlError
+	err = json.Unmarshal(resp.Errors, &actual)
+	require.NoError(t, err)
+
+	expected := []GqlError{
+		{Message: "authorization required", Path: []string{"createSchool"}},
+	}
+
+	require.Equal(t, 1, len(actual))
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestCreateSchoolDuplicateName() {
+	t := suite.T()
+	userModel := usermodel.New(suite.db)
+	user, err := userModel.Create(model.CreateUserInput{
+		Name:     "fizi",
+		Email:    "fizi@gmail.com",
+		Password: "123123",
+	})
+	require.NoError(t, err)
+
+	schoolModel := schoolmodel.New(suite.db)
+	_, err = schoolModel.Create(model.CreateSchoolInput{
+		Name: "CSC",
+	})
+	require.NoError(t, err)
+
+	resp, err := suite.client.RawPost(`mutation {
+		createSchool(
+			input: {name: "CSC", address: "R. Frei Evaristo, n 91"}
+		) {
+			id
+			name
+			address
+			phoneNumber
+			orders {
+				id
+			}
+			__typename
+		}
+	}`, addUserToContext(context.Background(), user.ID))
+
+	require.NoError(t, err)
+	var actual []GqlError
+	err = json.Unmarshal(resp.Errors, &actual)
+	require.NoError(t, err)
+
+	expected := []GqlError{
+		{Message: "school name already in use", Path: []string{"createSchool"}},
+	}
+
+	require.Equal(t, 1, len(actual))
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestCreateItemSuccess() {
+	t := suite.T()
+
+	userModel := usermodel.New(suite.db)
+	user, err := userModel.Create(model.CreateUserInput{Email: "fizi@gmail.com", Name: "fizi", Password: "123123"})
+	require.NoError(t, err)
+
+	var actual CreateItemResponse
+	suite.client.MustPost(`mutation {
+		createItem(input: {name: "Feijão", quantity: 10}) {
+			id
+			name
+			rawName
+			quantity
+			__typename
+		}
+	}`, &actual, addUserToContext(context.Background(), user.ID))
+
+	expected := CreateItemResponse{
+		CreateItem: CreateItem{
+			ID:       actual.ID,
+			Name:     "feijao",
+			RawName:  "feijão",
+			Quantity: 10,
+			Typename: "Item",
+		},
+	}
+
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestCreateItemUnauthorized() {
+	t := suite.T()
+
+	resp, err := suite.client.RawPost(`mutation {
+		createItem(input: {name: "Feijão", quantity: 10}) {
+			id
+			name
+			rawName
+			quantity
+			__typename
+		}
+	}`)
+
+	require.NoError(t, err)
+	var actual []GqlError
+	err = json.Unmarshal(resp.Errors, &actual)
+	require.NoError(t, err)
+
+	expected := []GqlError{
+		{Message: "authorization required", Path: []string{"createItem"}},
+	}
+
+	require.Equal(t, 1, len(actual))
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestCreateItemDuplicateName() {
+	t := suite.T()
+	userModel := usermodel.New(suite.db)
+	user, err := userModel.Create(model.CreateUserInput{
+		Name:     "fizi",
+		Email:    "fizi@gmail.com",
+		Password: "123123",
+	})
+	require.NoError(t, err)
+
+	itemModel := itemmodel.New(suite.db)
+	_, err = itemModel.Create(model.CreateItemInput{
+		Name:     "féijão",
+		Quantity: 10,
+	})
+	require.NoError(t, err)
+
+	resp, err := suite.client.RawPost(`mutation {
+		createItem(input: {name: "Feijão", quantity: 10}) {
+			id
+			name
+			rawName
+			quantity
+			__typename
+		}
+	}`, addUserToContext(context.Background(), user.ID))
+
+	require.NoError(t, err)
+	var actual []GqlError
+	err = json.Unmarshal(resp.Errors, &actual)
+	require.NoError(t, err)
+
+	expected := []GqlError{
+		{Message: "item with given name already registered", Path: []string{"createItem"}},
+	}
+
+	require.Equal(t, 1, len(actual))
 	require.EqualValues(t, expected, actual)
 }
 

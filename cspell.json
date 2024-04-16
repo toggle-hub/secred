@@ -1,9 +1,15 @@
 {
   "ignoreWords": [
     "usermodel",
-     "schoolmodel",
-     "gqlerror",
-     "xsadia",
-     "secred"
-    ]
+    "schoolmodel",
+    "gqlerror",
+    "xsadia",
+    "secred"
+  ],
+  "words": [
+    "feijão",
+    "gqlgen",
+    "itemmodel",
+    "stretchr"
+  ]
 }

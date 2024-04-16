@@ -2,11 +2,7 @@ package usermodel
 
 import (
 	"database/sql"
-	"errors"
-	"time"
 
-	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"github.com/xsadia/secred/graph/model"
 	"github.com/xsadia/secred/pkg/utils"
 )
@@ -30,37 +26,25 @@ func (um *UserModel) FindById(id string) (*model.User, error) {
 }
 
 func (um *UserModel) Create(input model.CreateUserInput) (*model.User, error) {
-	var id uuid.UUID
-	var createdAt, updatedAt time.Time
-
+	user := model.User{
+		Name:  input.Name,
+		Email: input.Email,
+	}
 	hash, err := utils.HashPassword(input.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	err = um.db.QueryRow(
+	row := um.db.QueryRow(
 		"INSERT INTO users (name, email, password) VALUES ($1, $2, $3) returning id, created_at, updated_at",
-		input.Name, input.Email, hash).Scan(&id, &createdAt, &updatedAt)
+		input.Name, input.Email, hash)
 
+	err = utils.ParseDuplicateError(row.Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt), "email already in use")
 	if err != nil {
-		pgErr, ok := err.(*pq.Error)
-		if ok {
-			if pgErr.Code == "23505" {
-				return nil, errors.New("email already in use")
-			}
-		}
-
-		return nil, errors.New("unexpected error")
+		return nil, err
 	}
 
-	return &model.User{
-		ID:        id.String(),
-		Name:      input.Name,
-		Email:     input.Email,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
-		DeletedAt: nil,
-	}, nil
+	return &user, nil
 }
 
 func New(db *sql.DB) *UserModel {

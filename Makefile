@@ -6,6 +6,9 @@ gen-graphql:
 run:
 	@go run ./cmd/server.go
 
+test:
+	@go test -v ./...
+
 migratecreate:
 	migrate create -ext sql -dir migrations -seq $(name)
 

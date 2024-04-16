@@ -6,6 +6,11 @@ import (
 	"time"
 )
 
+type CreateItemInput struct {
+	Name     string `json:"name"`
+	Quantity int    `json:"quantity"`
+}
+
 type CreateSchoolInput struct {
 	Name        string  `json:"name"`
 	Address     *string `json:"address,omitempty"`
@@ -26,6 +31,7 @@ type CreateUserReturnType struct {
 type Item struct {
 	ID        string     `json:"id"`
 	Name      string     `json:"name"`
+	RawName   string     `json:"rawName"`
 	Quantity  int        `json:"quantity"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
