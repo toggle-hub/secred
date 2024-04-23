@@ -115,8 +115,31 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 }
 
 // Items is the resolver for the items field.
-func (r *queryResolver) Items(ctx context.Context) ([]*model.Item, error) {
-	panic(fmt.Errorf("not implemented: Items - items"))
+func (r *queryResolver) Items(ctx context.Context, page *int, limit *int) (*model.Items, error) {
+	id, err := utils.GetUserFromContext(ctx)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	userModel := usermodel.New(r.DB)
+	_, err = userModel.FindById(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, gqlerror.Errorf("authorization required")
+		}
+
+		return nil, gqlerror.Errorf("unexpected error")
+	}
+
+	itemModel := itemmodel.New(r.DB)
+	items, hasNextPage := itemModel.LoadAll(*page, *limit)
+
+	return &model.Items{
+		Nodes: items,
+		PageInfo: &model.PageInfo{
+			HasNextPage: hasNextPage,
+		},
+	}, nil
 }
 
 // Schools is the resolver for the schools field.

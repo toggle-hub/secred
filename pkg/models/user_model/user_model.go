@@ -7,6 +7,8 @@ import (
 	"github.com/xsadia/secred/pkg/utils"
 )
 
+const UserType = "User"
+
 type UserModel struct {
 	db *sql.DB
 }
