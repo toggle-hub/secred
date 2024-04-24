@@ -38,6 +38,11 @@ type Item struct {
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 }
 
+type Items struct {
+	Nodes    []*Item   `json:"nodes"`
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
 type Mutation struct {
 }
 
@@ -57,6 +62,10 @@ type OrderItem struct {
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+}
+
+type PageInfo struct {
+	HasNextPage bool `json:"hasNextPage"`
 }
 
 type Query struct {

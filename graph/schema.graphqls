@@ -14,6 +14,10 @@ type User {
   deletedAt: Time
 }
 
+type PageInfo {
+  hasNextPage: Boolean!
+}
+
 type Item {
   id: ID!
   name: String!
@@ -22,6 +26,11 @@ type Item {
   createdAt: Time!
   updatedAt: Time!
   deletedAt: Time
+}
+
+type Items {
+  nodes: [Item!]!
+  pageInfo: PageInfo!
 }
 
 type Order {
@@ -83,7 +92,7 @@ type School {
 
 type Query {
   me: User
-  items: [Item!]!
+  items(page: Int = 1, limit: Int = 10): Items
   schools: [School!]!
   orders: [Order!]!
 }

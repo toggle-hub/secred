@@ -64,6 +64,22 @@ type MeResponse struct {
 	Me
 }
 
+type ItemNode struct {
+	ID       string
+	Name     string
+	RawName  string
+	Quantity int
+}
+
+type Items struct {
+	Nodes []ItemNode
+	model.PageInfo
+}
+
+type ItemsQueryResponse struct {
+	Items
+}
+
 type GqlError struct {
 	Message string
 	Path    []string
@@ -310,6 +326,55 @@ func (suite *SecredTestSuite) TestCreateItemDuplicateName() {
 	}
 
 	require.Equal(t, 1, len(actual))
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestItemsQuery() {
+	t := suite.T()
+
+	userModel := usermodel.New(suite.db)
+	user, err := userModel.Create(model.CreateUserInput{Email: "fizi@gmail.com", Name: "fizi", Password: "123123"})
+	require.NoError(t, err)
+
+	itemModel := itemmodel.New(suite.db)
+	err = itemModel.CreateMany([]model.CreateItemInput{
+		{Name: "feijao", Quantity: 10},
+		{Name: "arroz", Quantity: 10},
+		{Name: "curry", Quantity: 10},
+	})
+	require.NoError(t, err)
+
+	var actual ItemsQueryResponse
+	suite.client.MustPost(`query {
+		items(page:2, limit: 1) {
+			nodes {
+				id
+				name
+				rawName
+				quantity
+			}
+			pageInfo {
+				hasNextPage
+			}
+		}
+	}`, &actual, addUserToContext(context.Background(), user.ID))
+
+	expected := ItemsQueryResponse{
+		Items: Items{
+			Nodes: []ItemNode{
+				ItemNode{
+					ID:       actual.Nodes[0].ID,
+					Name:     "arroz",
+					RawName:  "arroz",
+					Quantity: 10,
+				},
+			},
+			PageInfo: model.PageInfo{
+				HasNextPage: true,
+			},
+		},
+	}
+
 	require.EqualValues(t, expected, actual)
 }
 

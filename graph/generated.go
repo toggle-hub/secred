@@ -63,6 +63,11 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
+	Items struct {
+		Nodes    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateItem   func(childComplexity int, input model.CreateItemInput) int
 		CreateSchool func(childComplexity int, input model.CreateSchoolInput) int
@@ -87,8 +92,12 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
+	PageInfo struct {
+		HasNextPage func(childComplexity int) int
+	}
+
 	Query struct {
-		Items   func(childComplexity int) int
+		Items   func(childComplexity int, page *int, limit *int) int
 		Me      func(childComplexity int) int
 		Orders  func(childComplexity int) int
 		Schools func(childComplexity int) int
@@ -150,7 +159,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
-	Items(ctx context.Context) ([]*model.Item, error)
+	Items(ctx context.Context, page *int, limit *int) (*model.Items, error)
 	Schools(ctx context.Context) ([]*model.School, error)
 	Orders(ctx context.Context) ([]*model.Order, error)
 }
@@ -236,6 +245,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Item.UpdatedAt(childComplexity), true
+
+	case "Items.nodes":
+		if e.complexity.Items.Nodes == nil {
+			break
+		}
+
+		return e.complexity.Items.Nodes(childComplexity), true
+
+	case "Items.pageInfo":
+		if e.complexity.Items.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.Items.PageInfo(childComplexity), true
 
 	case "Mutation.createItem":
 		if e.complexity.Mutation.CreateItem == nil {
@@ -357,12 +380,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.OrderItem.UpdatedAt(childComplexity), true
 
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+
 	case "Query.items":
 		if e.complexity.Query.Items == nil {
 			break
 		}
 
-		return e.complexity.Query.Items(childComplexity), true
+		args, err := ec.field_Query_items_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Items(childComplexity, args["page"].(*int), args["limit"].(*int)), true
 
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
@@ -803,6 +838,30 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_items_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1237,6 +1296,114 @@ func (ec *executionContext) fieldContext_Item_deletedAt(ctx context.Context, fie
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Items_nodes(ctx context.Context, field graphql.CollectedField, obj *model.Items) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Items_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Item)
+	fc.Result = res
+	return ec.marshalNItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐItemᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Items_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Items",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Item_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Item_name(ctx, field)
+			case "rawName":
+				return ec.fieldContext_Item_rawName(ctx, field)
+			case "quantity":
+				return ec.fieldContext_Item_quantity(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Item_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Item_updatedAt(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_Item_deletedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Item", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Items_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.Items) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Items_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Items_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Items",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -1987,6 +2154,50 @@ func (ec *executionContext) fieldContext_OrderItem_deletedAt(ctx context.Context
 	return fc, nil
 }
 
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_me(ctx, field)
 	if err != nil {
@@ -2056,21 +2267,18 @@ func (ec *executionContext) _Query_items(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Items(rctx)
+		return ec.resolvers.Query().Items(rctx, fc.Args["page"].(*int), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Item)
+	res := resTmp.(*model.Items)
 	fc.Result = res
-	return ec.marshalNItem2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐItemᚄ(ctx, field.Selections, res)
+	return ec.marshalOItems2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐItems(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_items(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2081,23 +2289,24 @@ func (ec *executionContext) fieldContext_Query_items(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Item_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Item_name(ctx, field)
-			case "rawName":
-				return ec.fieldContext_Item_rawName(ctx, field)
-			case "quantity":
-				return ec.fieldContext_Item_quantity(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Item_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Item_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_Item_deletedAt(ctx, field)
+			case "nodes":
+				return ec.fieldContext_Items_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Items_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Item", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Items", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_items_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -5823,6 +6032,50 @@ func (ec *executionContext) _Item(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
+var itemsImplementors = []string{"Items"}
+
+func (ec *executionContext) _Items(ctx context.Context, sel ast.SelectionSet, obj *model.Items) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, itemsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Items")
+		case "nodes":
+			out.Values[i] = ec._Items_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._Items_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -5996,6 +6249,45 @@ func (ec *executionContext) _OrderItem(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -6044,9 +6336,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_items(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -6987,6 +7276,16 @@ func (ec *executionContext) marshalNOrderItem2ᚖgithubᚗcomᚋxsadiaᚋsecred�
 	return ec._OrderItem(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNSchool2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.School) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7411,11 +7710,34 @@ func (ec *executionContext) marshalOCreateUserReturnType2ᚖgithubᚗcomᚋxsadi
 	return ec._CreateUserReturnType(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt(*v)
+	return res
+}
+
 func (ec *executionContext) marshalOItem2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐItem(ctx context.Context, sel ast.SelectionSet, v *model.Item) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Item(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOItems2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐItems(ctx context.Context, sel ast.SelectionSet, v *model.Items) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Items(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOSchool2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchool(ctx context.Context, sel ast.SelectionSet, v *model.School) graphql.Marshaler {
