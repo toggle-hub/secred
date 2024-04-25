@@ -90,10 +90,15 @@ type School {
   deletedAt: Time
 }
 
+type Schools {
+  nodes: [School!]!
+  pageInfo: PageInfo!
+}
+
 type Query {
   me: User
   items(page: Int = 1, limit: Int = 10): Items
-  schools: [School!]!
+  schools(page: Int = 1, limit: Int = 10): Schools
   orders: [Order!]!
 }
 

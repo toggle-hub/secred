@@ -14,7 +14,7 @@ type ItemModel struct {
 	db *sql.DB
 }
 
-var EmptyItemsList = []*model.Item{}
+// var EmptyItemsList = []*model.Item{}
 
 func (im *ItemModel) Create(input model.CreateItemInput) (*model.Item, error) {
 	rawName := strings.ToLower(input.Name)
@@ -36,13 +36,13 @@ func (im *ItemModel) Create(input model.CreateItemInput) (*model.Item, error) {
 	return &item, nil
 }
 
-func (im *ItemModel) LoadAll(page, limit int) ([]*model.Item, bool) {
+func (im *ItemModel) LoadMany(page, limit int) ([]*model.Item, bool) {
 	var results []*model.Item
 	offset := (page - 1) * limit
 	rows, err := im.db.Query("SELECT * FROM items WHERE deleted_at IS NULL LIMIT $1 OFFSET $2", limit+1, offset)
 	if err != nil {
 		log.Println("Error fetching items: ", err.Error())
-		return EmptyItemsList, false
+		return nil, false
 	}
 
 	for rows.Next() {
@@ -56,14 +56,14 @@ func (im *ItemModel) LoadAll(page, limit int) ([]*model.Item, bool) {
 			&item.UpdatedAt,
 			&item.DeletedAt,
 		); err != nil {
-			return EmptyItemsList, false
+			return nil, false
 		}
 
 		results = append(results, &item)
 	}
 
 	if len(results) < 1 {
-		return EmptyItemsList, false
+		return nil, false
 	}
 
 	if len(results) > limit {

@@ -100,7 +100,7 @@ type ComplexityRoot struct {
 		Items   func(childComplexity int, page *int, limit *int) int
 		Me      func(childComplexity int) int
 		Orders  func(childComplexity int) int
-		Schools func(childComplexity int) int
+		Schools func(childComplexity int, page *int, limit *int) int
 	}
 
 	School struct {
@@ -142,6 +142,11 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 	}
 
+	Schools struct {
+		Nodes    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
 	User struct {
 		CreatedAt func(childComplexity int) int
 		DeletedAt func(childComplexity int) int
@@ -160,7 +165,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	Me(ctx context.Context) (*model.User, error)
 	Items(ctx context.Context, page *int, limit *int) (*model.Items, error)
-	Schools(ctx context.Context) ([]*model.School, error)
+	Schools(ctx context.Context, page *int, limit *int) (*model.Schools, error)
 	Orders(ctx context.Context) ([]*model.Order, error)
 }
 
@@ -418,7 +423,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Schools(childComplexity), true
+		args, err := ec.field_Query_schools_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Schools(childComplexity, args["page"].(*int), args["limit"].(*int)), true
 
 	case "School.address":
 		if e.complexity.School.Address == nil {
@@ -608,6 +618,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.SchoolOrderItem.UpdatedAt(childComplexity), true
+
+	case "Schools.nodes":
+		if e.complexity.Schools.Nodes == nil {
+			break
+		}
+
+		return e.complexity.Schools.Nodes(childComplexity), true
+
+	case "Schools.pageInfo":
+		if e.complexity.Schools.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.Schools.PageInfo(childComplexity), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -839,6 +863,30 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_items_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["page"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["page"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["limit"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["limit"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_schools_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *int
@@ -2325,21 +2373,18 @@ func (ec *executionContext) _Query_schools(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Schools(rctx)
+		return ec.resolvers.Query().Schools(rctx, fc.Args["page"].(*int), fc.Args["limit"].(*int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.School)
+	res := resTmp.(*model.Schools)
 	fc.Result = res
-	return ec.marshalNSchool2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolᚄ(ctx, field.Selections, res)
+	return ec.marshalOSchools2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchools(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_schools(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2350,25 +2395,24 @@ func (ec *executionContext) fieldContext_Query_schools(ctx context.Context, fiel
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_School_id(ctx, field)
-			case "name":
-				return ec.fieldContext_School_name(ctx, field)
-			case "address":
-				return ec.fieldContext_School_address(ctx, field)
-			case "phoneNumber":
-				return ec.fieldContext_School_phoneNumber(ctx, field)
-			case "orders":
-				return ec.fieldContext_School_orders(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_School_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_School_updatedAt(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_School_deletedAt(ctx, field)
+			case "nodes":
+				return ec.fieldContext_Schools_nodes(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Schools_pageInfo(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type School", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Schools", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_schools_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
 	}
 	return fc, nil
 }
@@ -3765,6 +3809,116 @@ func (ec *executionContext) fieldContext_SchoolOrderItem_deletedAt(ctx context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Schools_nodes(ctx context.Context, field graphql.CollectedField, obj *model.Schools) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Schools_nodes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Nodes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.School)
+	fc.Result = res
+	return ec.marshalNSchool2ᚕᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchoolᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Schools_nodes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Schools",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_School_id(ctx, field)
+			case "name":
+				return ec.fieldContext_School_name(ctx, field)
+			case "address":
+				return ec.fieldContext_School_address(ctx, field)
+			case "phoneNumber":
+				return ec.fieldContext_School_phoneNumber(ctx, field)
+			case "orders":
+				return ec.fieldContext_School_orders(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_School_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_School_updatedAt(ctx, field)
+			case "deletedAt":
+				return ec.fieldContext_School_deletedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type School", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Schools_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.Schools) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Schools_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Schools_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Schools",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
 	}
 	return fc, nil
@@ -6355,9 +6509,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_schools(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
 				return res
 			}
 
@@ -6644,6 +6795,50 @@ func (ec *executionContext) _SchoolOrderItem(ctx context.Context, sel ast.Select
 			}
 		case "deletedAt":
 			out.Values[i] = ec._SchoolOrderItem_deletedAt(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var schoolsImplementors = []string{"Schools"}
+
+func (ec *executionContext) _Schools(ctx context.Context, sel ast.SelectionSet, obj *model.Schools) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, schoolsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Schools")
+		case "nodes":
+			out.Values[i] = ec._Schools_nodes(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._Schools_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7745,6 +7940,13 @@ func (ec *executionContext) marshalOSchool2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋg
 		return graphql.Null
 	}
 	return ec._School(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSchools2ᚖgithubᚗcomᚋxsadiaᚋsecredᚋgraphᚋmodelᚐSchools(ctx context.Context, sel ast.SelectionSet, v *model.Schools) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Schools(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

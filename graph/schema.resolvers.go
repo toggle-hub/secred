@@ -6,8 +6,6 @@ package graph
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 
@@ -17,6 +15,7 @@ import (
 	schoolmodel "github.com/xsadia/secred/pkg/models/school_model"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 	"github.com/xsadia/secred/pkg/utils"
+	authutils "github.com/xsadia/secred/pkg/utils/auth_utils"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -42,19 +41,9 @@ func (r *mutationResolver) CreateUser(ctx context.Context, input model.CreateUse
 
 // CreateSchool is the resolver for the createSchool field.
 func (r *mutationResolver) CreateSchool(ctx context.Context, input model.CreateSchoolInput) (*model.School, error) {
-	id, err := utils.GetUserFromContext(ctx)
+	_, err := authutils.AuthenticateUser(ctx, r.DB)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
-	}
-
-	userModel := usermodel.New(r.DB)
-	_, err = userModel.FindById(id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, gqlerror.Errorf("authorization required")
-		}
-
-		return nil, gqlerror.Errorf("unexpected error")
 	}
 
 	schoolModel := schoolmodel.New(r.DB)
@@ -68,19 +57,9 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.CreateS
 
 // CreateItem is the resolver for the createItem field.
 func (r *mutationResolver) CreateItem(ctx context.Context, input model.CreateItemInput) (*model.Item, error) {
-	id, err := utils.GetUserFromContext(ctx)
+	_, err := authutils.AuthenticateUser(ctx, r.DB)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
-	}
-
-	userModel := usermodel.New(r.DB)
-	_, err = userModel.FindById(id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, gqlerror.Errorf("authorization required")
-		}
-
-		return nil, gqlerror.Errorf("unexpected error")
 	}
 
 	itemModel := itemmodel.New(r.DB)
@@ -94,45 +73,23 @@ func (r *mutationResolver) CreateItem(ctx context.Context, input model.CreateIte
 
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
-	id, err := utils.GetUserFromContext(ctx)
+	user, err := authutils.AuthenticateUser(ctx, r.DB)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	userModel := usermodel.New(r.DB)
-
-	user, err := userModel.FindById(id)
-	if err == nil {
-		return user, nil
-	}
-
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Println(err)
-		return nil, gqlerror.Errorf("Authorization required")
-	}
-
-	return nil, gqlerror.Errorf("Unexpected error")
+	return user, nil
 }
 
 // Items is the resolver for the items field.
 func (r *queryResolver) Items(ctx context.Context, page *int, limit *int) (*model.Items, error) {
-	id, err := utils.GetUserFromContext(ctx)
+	_, err := authutils.AuthenticateUser(ctx, r.DB)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
 	}
 
-	userModel := usermodel.New(r.DB)
-	_, err = userModel.FindById(id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, gqlerror.Errorf("authorization required")
-		}
-
-		return nil, gqlerror.Errorf("unexpected error")
-	}
-
 	itemModel := itemmodel.New(r.DB)
-	items, hasNextPage := itemModel.LoadAll(*page, *limit)
+	items, hasNextPage := itemModel.LoadMany(*page, *limit)
 
 	return &model.Items{
 		Nodes: items,
@@ -143,8 +100,21 @@ func (r *queryResolver) Items(ctx context.Context, page *int, limit *int) (*mode
 }
 
 // Schools is the resolver for the schools field.
-func (r *queryResolver) Schools(ctx context.Context) ([]*model.School, error) {
-	panic(fmt.Errorf("not implemented: Schools - schools"))
+func (r *queryResolver) Schools(ctx context.Context, page *int, limit *int) (*model.Schools, error) {
+	_, err := authutils.AuthenticateUser(ctx, r.DB)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	schoolModel := schoolmodel.New(r.DB)
+	schools, hasNextPage := schoolModel.LoadMany(*page, *limit)
+
+	return &model.Schools{
+		Nodes: schools,
+		PageInfo: &model.PageInfo{
+			HasNextPage: hasNextPage,
+		},
+	}, nil
 }
 
 // Orders is the resolver for the orders field.
