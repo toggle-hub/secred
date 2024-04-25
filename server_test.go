@@ -80,6 +80,22 @@ type ItemsQueryResponse struct {
 	Items
 }
 
+type SchoolNode struct {
+	ID          string
+	Name        string
+	Address     string
+	PhoneNumber string
+}
+
+type Schools struct {
+	Nodes []SchoolNode
+	model.PageInfo
+}
+
+type SchoolsQueryResponse struct {
+	Schools
+}
+
 type GqlError struct {
 	Message string
 	Path    []string
@@ -329,7 +345,7 @@ func (suite *SecredTestSuite) TestCreateItemDuplicateName() {
 	require.EqualValues(t, expected, actual)
 }
 
-func (suite *SecredTestSuite) TestItemsQuery() {
+func (suite *SecredTestSuite) TestItemsQuerySuccess() {
 	t := suite.T()
 
 	userModel := usermodel.New(suite.db)
@@ -371,6 +387,84 @@ func (suite *SecredTestSuite) TestItemsQuery() {
 			},
 			PageInfo: model.PageInfo{
 				HasNextPage: true,
+			},
+		},
+	}
+
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestItemsQueryEmpty() {
+	t := suite.T()
+
+	userModel := usermodel.New(suite.db)
+	user, err := userModel.Create(model.CreateUserInput{Email: "fizi@gmail.com", Name: "fizi", Password: "123123"})
+	require.NoError(t, err)
+
+	var actual ItemsQueryResponse
+	suite.client.MustPost(`query {
+		items(page:2, limit: 1) {
+			nodes {
+				id
+				name
+				rawName
+				quantity
+			}
+			pageInfo {
+				hasNextPage
+			}
+		}
+	}`, &actual, addUserToContext(context.Background(), user.ID))
+
+	expected := ItemsQueryResponse{
+		Items: Items{
+			Nodes: []ItemNode{},
+			PageInfo: model.PageInfo{
+				HasNextPage: false,
+			},
+		},
+	}
+
+	require.EqualValues(t, expected, actual)
+}
+
+func (suite *SecredTestSuite) TestSchoolsQuerySuccess() {
+	t := suite.T()
+
+	userModel := usermodel.New(suite.db)
+	user, err := userModel.Create(model.CreateUserInput{Email: "fizi@gmail.com", Name: "fizi", Password: "123123"})
+	require.NoError(t, err)
+
+	schoolModel := schoolmodel.New(suite.db)
+	address := "victor konder"
+	err = schoolModel.CreateMany([]model.CreateSchoolInput{
+		{Name: "CSC", Address: &address},
+		{Name: "Bom jesus"},
+	})
+	require.NoError(t, err)
+
+	var actual SchoolsQueryResponse
+	suite.client.MustPost(`query {
+		schools(page:2, limit: 1) {
+			nodes {
+				id
+				name
+				address
+				phoneNumber
+			}
+			pageInfo {
+				hasNextPage
+			}
+		}
+	}`, &actual, addUserToContext(context.Background(), user.ID))
+
+	expected := SchoolsQueryResponse{
+		Schools: Schools{
+			Nodes: []SchoolNode{
+				{ID: actual.Schools.Nodes[0].ID, Name: "Bom jesus", Address: "", PhoneNumber: ""},
+			},
+			PageInfo: model.PageInfo{
+				HasNextPage: false,
 			},
 		},
 	}

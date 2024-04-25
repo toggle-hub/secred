@@ -110,6 +110,11 @@ type SchoolOrderItem struct {
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 }
 
+type Schools struct {
+	Nodes    []*School `json:"nodes"`
+	PageInfo *PageInfo `json:"pageInfo"`
+}
+
 type User struct {
 	ID        string     `json:"id"`
 	Name      string     `json:"name"`
