@@ -68,12 +68,6 @@ func (sm *SchoolModel) LoadMany(page, limit int) ([]*model.School, bool) {
 	return results, false
 }
 
-func New(db *sql.DB) *SchoolModel {
-	return &SchoolModel{
-		db,
-	}
-}
-
 func (sm *SchoolModel) CreateMany(input []model.CreateSchoolInput) error {
 	query := "INSERT INTO schools (name, address, phone_number) VALUES "
 	values := make([]interface{}, len(input)*3)
@@ -89,4 +83,10 @@ func (sm *SchoolModel) CreateMany(input []model.CreateSchoolInput) error {
 	query = query[:len(query)-1]
 	_, err := sm.db.Exec(query, values...)
 	return err
+}
+
+func New(db *sql.DB) *SchoolModel {
+	return &SchoolModel{
+		db,
+	}
 }

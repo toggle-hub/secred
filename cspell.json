@@ -7,9 +7,12 @@
     "secred"
   ],
   "words": [
+    "authutils",
     "feijão",
     "gqlgen",
     "itemmodel",
+    "orderitemmodel",
+    "ordermodel",
     "stretchr"
   ]
 }

@@ -11,6 +11,16 @@ type CreateItemInput struct {
 	Quantity int    `json:"quantity"`
 }
 
+type CreateOrderInput struct {
+	Items      []*CreateOrderItemInput `json:"items"`
+	InvoiceURL *string                 `json:"invoiceURL,omitempty"`
+}
+
+type CreateOrderItemInput struct {
+	Name     string `json:"name"`
+	Quantity int    `json:"quantity"`
+}
+
 type CreateSchoolInput struct {
 	Name        string  `json:"name"`
 	Address     *string `json:"address,omitempty"`
@@ -48,7 +58,7 @@ type Mutation struct {
 
 type Order struct {
 	ID         string       `json:"id"`
-	Items      []*OrderItem `json:"items"`
+	OrderItems []*OrderItem `json:"orderItems"`
 	InvoiceURL *string      `json:"invoiceURL,omitempty"`
 	CreatedAt  time.Time    `json:"createdAt"`
 	UpdatedAt  time.Time    `json:"updatedAt"`

@@ -35,7 +35,7 @@ type Items {
 
 type Order {
   id: ID!
-  items: [OrderItem!]!
+  orderItems: [OrderItem!]!
   invoiceURL: Url
   createdAt: Time!
   updatedAt: Time!
@@ -124,8 +124,19 @@ input CreateItemInput {
   quantity: Int!
 }
 
+input CreateOrderItemInput {
+  name: String!
+  quantity: Int!
+}
+
+input CreateOrderInput {
+  items: [CreateOrderItemInput!]!
+  invoiceURL: Url
+}
+
 type Mutation {
   createUser(input: CreateUserInput!): CreateUserReturnType
   createSchool(input: CreateSchoolInput!): School
+  createOrder(input: CreateOrderInput): Order
   createItem(input: CreateItemInput!): Item
 }
