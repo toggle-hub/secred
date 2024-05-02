@@ -8,10 +8,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/xsadia/secred/graph/model"
 	itemmodel "github.com/xsadia/secred/pkg/models/item_model"
+	orderitemmodel "github.com/xsadia/secred/pkg/models/order_item_model"
+	ordermodel "github.com/xsadia/secred/pkg/models/order_model"
 	schoolmodel "github.com/xsadia/secred/pkg/models/school_model"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 	"github.com/xsadia/secred/pkg/utils"
@@ -53,6 +56,107 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.CreateS
 	}
 
 	return school, nil
+}
+
+// CreateOrder is the resolver for the createOrder field.
+func (r *mutationResolver) CreateOrder(ctx context.Context, input *model.CreateOrderInput) (*model.Order, error) {
+	_, err := authutils.AuthenticateUser(ctx, r.DB)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	itemsInput := make([]model.CreateItemInput, len(input.Items))
+	for i, entry := range input.Items {
+		itemsInput[i] = model.CreateItemInput{
+			Name:     entry.Name,
+			Quantity: entry.Quantity,
+		}
+	}
+
+	orderModel := ordermodel.New(r.DB)
+	order, err := orderModel.Create(input.InvoiceURL)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	itemModel := itemmodel.New(r.DB)
+	items, err := itemModel.LoadOrCreateManyByName(itemsInput)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	orderItemInput := make([]orderitemmodel.OrderItemCreateInput, len(items))
+	mi := make(map[string]itemmodel.LoadCreateItem)
+	for i, item := range items {
+		for _, entry := range input.Items {
+			if utils.RemoveDiacritics(strings.ToLower(entry.Name)) == item.Name {
+				orderItemInput[i] = orderitemmodel.OrderItemCreateInput{
+					OrderId:  order.ID,
+					ItemId:   item.ID,
+					Quantity: entry.Quantity,
+				}
+			}
+		}
+
+		mi[item.ID] = item
+	}
+
+	orderItemModel := orderitemmodel.New(r.DB)
+	orderItems, err := orderItemModel.CreateMany(orderItemInput)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	updateItemInput := make([]itemmodel.UpdateItemInput, len(items))
+	for i, orderItem := range orderItems {
+		item := mi[orderItem.ItemId]
+		var quantity int
+		if item.Inserted {
+			quantity = item.Quantity
+		} else {
+			quantity = item.Quantity + orderItem.Quantity
+		}
+
+		updateItemInput[i] = itemmodel.UpdateItemInput{
+			ID:       item.ID,
+			Name:     item.Name,
+			Quantity: quantity,
+		}
+	}
+
+	updatedItems, err := itemModel.UpdateMany(updateItemInput)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	for _, item := range updatedItems {
+		mi[item.ID] = itemmodel.LoadCreateItem{
+			Item: item,
+		}
+	}
+
+	var modelOrderItems []*model.OrderItem
+	for _, orderItem := range orderItems {
+		item := mi[orderItem.ItemId]
+
+		modelOrderItems = append(modelOrderItems, &model.OrderItem{
+			ID:        orderItem.ID,
+			Quantity:  orderItem.Quantity,
+			Item:      item.Item,
+			CreatedAt: orderItem.CreatedAt,
+			UpdatedAt: orderItem.UpdatedAt,
+			DeletedAt: orderItem.DeletedAt,
+		})
+	}
+
+	return &model.Order{
+		ID:         order.ID,
+		OrderItems: modelOrderItems,
+		InvoiceURL: order.InvoiceUrl,
+		CreatedAt:  order.CreatedAt,
+		UpdatedAt:  order.UpdatedAt,
+		DeletedAt:  order.DeletedAt,
+	}, nil
 }
 
 // CreateItem is the resolver for the createItem field.

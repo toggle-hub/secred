@@ -353,7 +353,7 @@ func (suite *SecredTestSuite) TestItemsQuerySuccess() {
 	require.NoError(t, err)
 
 	itemModel := itemmodel.New(suite.db)
-	err = itemModel.CreateMany([]model.CreateItemInput{
+	_, err = itemModel.CreateMany([]model.CreateItemInput{
 		{Name: "feijao", Quantity: 10},
 		{Name: "arroz", Quantity: 10},
 		{Name: "curry", Quantity: 10},
