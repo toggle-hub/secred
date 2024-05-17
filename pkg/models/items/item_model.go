@@ -34,6 +34,41 @@ func (im *ItemModel) Create(input model.CreateItemInput) (*model.Item, error) {
 	return &item, nil
 }
 
+func (im *ItemModel) LoadManyByName(input []string) ([]*model.Item, error) {
+	query := "SELECT * FROM items WHERE name in ("
+	values := make([]interface{}, len(input))
+	for i, entry := range input {
+		query = query + fmt.Sprintf("$%d,", i+1)
+		values[i] = utils.RemoveDiacritics(entry)
+	}
+	query = query[:len(query)-1] + ")"
+
+	rows, err := im.db.Query(query, values...)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*model.Item
+	for rows.Next() {
+		var item model.Item
+		if err := rows.Scan(
+			&item.ID,
+			&item.Name,
+			&item.RawName,
+			&item.Quantity,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		results = append(results, &item)
+	}
+
+	return results, nil
+}
+
 func (im *ItemModel) LoadMany(page, limit int) ([]*model.Item, bool) {
 	var results []*model.Item
 	offset := (page - 1) * limit
@@ -137,7 +172,7 @@ func (im *ItemModel) UpdateMany(input []UpdateItemInput) ([]*model.Item, error) 
 	}
 	query = query[:len(query)-1] + `) 
 	AS data(id, name, raw_name, quantity)
-	WHERE items.id = data.id returning items.id, items.name, items.raw_name, items.quantity, items.created_at, items.updated_at`
+	WHERE items.id = data.id RETURNING items.id, items.name, items.raw_name, items.quantity, items.created_at, items.updated_at`
 	rows, err := im.db.Query(query, values...)
 	if err != nil {
 		return nil, err

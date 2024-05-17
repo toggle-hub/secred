@@ -12,13 +12,16 @@ import (
 
 	"github.com/vektah/gqlparser/v2/gqlerror"
 	"github.com/xsadia/secred/graph/model"
-	itemmodel "github.com/xsadia/secred/pkg/models/item_model"
-	orderitemmodel "github.com/xsadia/secred/pkg/models/order_item_model"
-	ordermodel "github.com/xsadia/secred/pkg/models/order_model"
-	schoolmodel "github.com/xsadia/secred/pkg/models/school_model"
+	itemmodel "github.com/xsadia/secred/pkg/models/items"
+	orderitemmodel "github.com/xsadia/secred/pkg/models/order_items"
+	ordermodel "github.com/xsadia/secred/pkg/models/orders"
+	schoolorderitemmodel "github.com/xsadia/secred/pkg/models/school_order_items"
+	schoolordermodel "github.com/xsadia/secred/pkg/models/school_orders"
+	schoolmodel "github.com/xsadia/secred/pkg/models/schools"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 	"github.com/xsadia/secred/pkg/utils"
 	authutils "github.com/xsadia/secred/pkg/utils/auth_utils"
+	"github.com/xsadia/secred/pkg/utils/lists"
 )
 
 // CreateUser is the resolver for the createUser field.
@@ -59,7 +62,7 @@ func (r *mutationResolver) CreateSchool(ctx context.Context, input model.CreateS
 }
 
 // CreateOrder is the resolver for the createOrder field.
-func (r *mutationResolver) CreateOrder(ctx context.Context, input *model.CreateOrderInput) (*model.Order, error) {
+func (r *mutationResolver) CreateOrder(ctx context.Context, input model.CreateOrderInput) (*model.Order, error) {
 	_, err := authutils.AuthenticateUser(ctx, r.DB)
 	if err != nil {
 		return nil, gqlerror.Errorf(err.Error())
@@ -153,6 +156,128 @@ func (r *mutationResolver) CreateOrder(ctx context.Context, input *model.CreateO
 		ID:         order.ID,
 		OrderItems: modelOrderItems,
 		InvoiceURL: order.InvoiceUrl,
+		CreatedAt:  order.CreatedAt,
+		UpdatedAt:  order.UpdatedAt,
+		DeletedAt:  order.DeletedAt,
+	}, nil
+}
+
+// CreateSchoolOrder is the resolver for the createSchoolOrder field.
+func (r *mutationResolver) CreateSchoolOrder(ctx context.Context, input model.CreateSchoolOrderInput) (*model.SchoolOrder, error) {
+	_, err := authutils.AuthenticateUser(ctx, r.DB)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	schoolModel := schoolmodel.New(r.DB)
+	school, err := schoolModel.FindById(input.School)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	itemModel := itemmodel.New(r.DB)
+	items, err := itemModel.LoadManyByName(
+		lists.Map(
+			input.Items, func(elem *model.CreateOrderItemInput, _ int, _ []*model.CreateOrderItemInput) string {
+				return elem.Name
+			}),
+	)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	foundItemsMap := lists.Reduce(
+		items,
+		map[string]*model.Item{},
+		func(acc map[string]*model.Item, elem *model.Item) map[string]*model.Item {
+			acc[elem.Name] = elem
+
+			return acc
+		})
+
+	if len(input.Items) != len(items) {
+		var notFoundItems []string
+		for _, entry := range input.Items {
+			if _, ok := foundItemsMap[utils.RemoveDiacritics(strings.ToLower(entry.Name))]; !ok {
+				notFoundItems = append(notFoundItems, entry.Name)
+			}
+		}
+
+		errMessage := lists.Reduce(
+			notFoundItems,
+			"could not find items with names: [",
+			func(acc string, elem string) string {
+				return acc + fmt.Sprintf("%s, ", elem)
+			})
+
+		errMessage = errMessage[:len(errMessage)-2] + "]"
+		return nil, gqlerror.Errorf(errMessage)
+	}
+
+	schoolOrderModel := schoolordermodel.New(r.DB)
+	order, err := schoolOrderModel.Create(school.ID)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	var createManyInput []schoolorderitemmodel.SchoolOrderItemCreateInput
+	var updateItemsInput []itemmodel.UpdateItemInput
+	for _, entry := range input.Items {
+		item := foundItemsMap[utils.RemoveDiacritics(strings.ToLower(entry.Name))]
+		if entry.Quantity > item.Quantity {
+			return nil, gqlerror.Errorf("insufficient quantity for item %s", entry.Name)
+		}
+
+		createManyInput = append(createManyInput, schoolorderitemmodel.SchoolOrderItemCreateInput{
+			ItemID:   item.ID,
+			OrderID:  order.ID,
+			Quantity: entry.Quantity,
+		})
+
+		updateItemsInput = append(updateItemsInput, itemmodel.UpdateItemInput{
+			ID:       item.ID,
+			Name:     item.Name,
+			Quantity: item.Quantity - entry.Quantity,
+		})
+	}
+
+	schoolOrderItemModel := schoolorderitemmodel.New(r.DB)
+	schoolOrderItems, err := schoolOrderItemModel.CreateMany(createManyInput)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	_, err = itemModel.UpdateMany(updateItemsInput)
+	if err != nil {
+		return nil, gqlerror.Errorf(err.Error())
+	}
+
+	orderItemMap := lists.Reduce(
+		schoolOrderItems,
+		map[string]*schoolorderitemmodel.SchoolOrderItem{},
+		func(acc map[string]*schoolorderitemmodel.SchoolOrderItem, elem *schoolorderitemmodel.SchoolOrderItem) map[string]*schoolorderitemmodel.SchoolOrderItem {
+			acc[elem.ItemID] = elem
+			return acc
+		})
+
+	var orderItems []*model.SchoolOrderItem
+	for _, item := range items {
+		orderItem := orderItemMap[item.ID]
+
+		orderItems = append(orderItems, &model.SchoolOrderItem{
+			ID:        orderItem.ID,
+			Name:      item.Name,
+			Quantity:  orderItem.Quantity,
+			CreatedAt: orderItem.CreatedAt,
+			UpdatedAt: orderItem.UpdatedAt,
+			DeletedAt: orderItem.DeletedAt,
+		})
+	}
+
+	return &model.SchoolOrder{
+		ID:         order.ID,
+		SchoolID:   school.ID,
+		OrderItems: orderItems,
 		CreatedAt:  order.CreatedAt,
 		UpdatedAt:  order.UpdatedAt,
 		DeletedAt:  order.DeletedAt,

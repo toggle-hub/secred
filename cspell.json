@@ -13,6 +13,7 @@
     "itemmodel",
     "orderitemmodel",
     "ordermodel",
+    "schoolordermodel",
     "stretchr"
   ]
 }
