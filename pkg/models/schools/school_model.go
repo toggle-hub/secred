@@ -13,6 +13,27 @@ type SchoolModel struct {
 	db *sql.DB
 }
 
+func (sm *SchoolModel) FindById(id string) (*model.School, error) {
+	var school model.School
+	err := sm.db.QueryRow(
+		"SELECT * FROM schools WHERE id = $1 AND deleted_at IS NULL",
+		id,
+	).Scan(
+		&school.ID,
+		&school.Name,
+		&school.Address,
+		&school.PhoneNumber,
+		&school.CreatedAt,
+		&school.UpdatedAt,
+		&school.DeletedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &school, nil
+}
+
 func (sm *SchoolModel) Create(input model.CreateSchoolInput) (*model.School, error) {
 	school := model.School{
 		Name:        input.Name,

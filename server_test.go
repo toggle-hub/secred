@@ -16,8 +16,8 @@ import (
 	"github.com/xsadia/secred/graph"
 	"github.com/xsadia/secred/graph/model"
 	"github.com/xsadia/secred/pkg/database"
-	itemmodel "github.com/xsadia/secred/pkg/models/item_model"
-	schoolmodel "github.com/xsadia/secred/pkg/models/school_model"
+	itemmodel "github.com/xsadia/secred/pkg/models/items"
+	schoolmodel "github.com/xsadia/secred/pkg/models/schools"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 )
 

@@ -12,7 +12,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o bin/app cmd/server.go
 
-FROM golang:1.20-alpine
+FROM golang:1.22
 
 COPY --from=build /usr/src/app/migrations ./migrations/
 

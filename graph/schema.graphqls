@@ -51,14 +51,14 @@ type OrderItem {
   deletedAt: Time
 }
 
-type SchoolItem {
-  id: ID!
-  name: String!
-  quantity: Int!
-  createdAt: Time!
-  updatedAt: Time!
-  deletedAt: Time
-}
+# type SchoolItem {
+#   id: ID!
+#   name: String!
+#   quantity: Int!
+#   createdAt: Time!
+#   updatedAt: Time!
+#   deletedAt: Time
+# }
 
 type SchoolOrderItem {
   id: ID!
@@ -71,8 +71,8 @@ type SchoolOrderItem {
 
 type SchoolOrder {
   id: ID!
-  school: School
-  items: [SchoolOrderItem!]!
+  schoolId: String!
+  OrderItems: [SchoolOrderItem!]!
   createdAt: Time!
   updatedAt: Time!
   deliveredAt: Time
@@ -84,7 +84,7 @@ type School {
   name: String!
   address: String
   phoneNumber: String
-  orders: [Order!]!
+  orders: [SchoolOrder!]!
   createdAt: Time!
   updatedAt: Time!
   deletedAt: Time
@@ -134,9 +134,15 @@ input CreateOrderInput {
   invoiceURL: Url
 }
 
+input CreateSchoolOrderInput {
+  items: [CreateOrderItemInput!]!
+  school: ID!
+}
+
 type Mutation {
   createUser(input: CreateUserInput!): CreateUserReturnType
   createSchool(input: CreateSchoolInput!): School
-  createOrder(input: CreateOrderInput): Order
+  createOrder(input: CreateOrderInput!): Order
+  createSchoolOrder(input: CreateSchoolOrderInput!): SchoolOrder
   createItem(input: CreateItemInput!): Item
 }

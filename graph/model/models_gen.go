@@ -27,6 +27,11 @@ type CreateSchoolInput struct {
 	PhoneNumber *string `json:"phoneNumber,omitempty"`
 }
 
+type CreateSchoolOrderInput struct {
+	Items  []*CreateOrderItemInput `json:"items"`
+	School string                  `json:"school"`
+}
+
 type CreateUserInput struct {
 	Email    string `json:"email"`
 	Name     string `json:"name"`
@@ -82,29 +87,20 @@ type Query struct {
 }
 
 type School struct {
-	ID          string     `json:"id"`
-	Name        string     `json:"name"`
-	Address     *string    `json:"address,omitempty"`
-	PhoneNumber *string    `json:"phoneNumber,omitempty"`
-	Orders      []*Order   `json:"orders"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
-	DeletedAt   *time.Time `json:"deletedAt,omitempty"`
-}
-
-type SchoolItem struct {
-	ID        string     `json:"id"`
-	Name      string     `json:"name"`
-	Quantity  int        `json:"quantity"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Address     *string        `json:"address,omitempty"`
+	PhoneNumber *string        `json:"phoneNumber,omitempty"`
+	Orders      []*SchoolOrder `json:"orders"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt"`
+	DeletedAt   *time.Time     `json:"deletedAt,omitempty"`
 }
 
 type SchoolOrder struct {
 	ID          string             `json:"id"`
-	School      *School            `json:"school,omitempty"`
-	Items       []*SchoolOrderItem `json:"items"`
+	SchoolID    string             `json:"schoolId"`
+	OrderItems  []*SchoolOrderItem `json:"OrderItems"`
 	CreatedAt   time.Time          `json:"createdAt"`
 	UpdatedAt   time.Time          `json:"updatedAt"`
 	DeliveredAt *time.Time         `json:"deliveredAt,omitempty"`

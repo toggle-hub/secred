@@ -55,7 +55,7 @@ func (om *OrderItemModel) CreateMany(input []OrderItemCreateInput) ([]*OrderItem
 		values[3*i+2] = item.Quantity
 	}
 
-	query = query[:len(query)-1] + "returning id, order_id, item_id, quantity, created_at, updated_at, deleted_at"
+	query = query[:len(query)-1] + "RETURNING id, order_id, item_id, quantity, created_at, updated_at, deleted_at"
 
 	rows, err := om.db.Query(query, values...)
 	if err != nil {
