@@ -6,11 +6,9 @@ import (
 
 	_ "github.com/golang-migrate/migrate/source/file"
 	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
+	"github.com/xsadia/secred/pkg/api"
 	"github.com/xsadia/secred/pkg/database"
-	"github.com/xsadia/secred/pkg/handlers"
-	"github.com/xsadia/secred/pkg/middlewares"
 	"github.com/xsadia/secred/pkg/utils"
 )
 
@@ -20,32 +18,31 @@ func main() {
 	godotenv.Load()
 	port := utils.Or(os.Getenv("PORT"), defaultPort)
 
-	db, err := database.New(
-		"localhost",
-		"root",
-		"root",
-		"secred",
-		"disable",
-	)
+	// db, err := database.New(
+	// 	"localhost",
+	// 	"root",
+	// 	"root",
+	// 	"secred",
+	// 	"disable",
+	// )
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer db.Close()
+
+	// database.ConfigDB(db)
+	// if err := db.Ping(); err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// if err := database.Migrate(db); err != nil {
+	// 	log.Fatal(err)
+	// }
+	_, err := database.GetInstance()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
 
-	database.ConfigDB(db)
-	if err := db.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := database.Migrate(db); err != nil {
-		log.Fatal(err)
-	}
-
-	e := echo.New()
-	e.POST("/graphql", handlers.GraphQLHandler(db))
-	e.GET("/", handlers.PlaygroundHandler())
-
-	e.Use(middlewares.AuthMiddleware)
-
-	log.Panic(e.Start(":" + port))
+	app := api.New()
+	app.Listen(":" + port)
 }
