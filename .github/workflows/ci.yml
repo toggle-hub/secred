@@ -30,6 +30,7 @@ jobs:
       DB_PASSWORD: root
       DB_NAME: secred_test
       DB_URL: postgresql://root:root@localhost:5432/secred_test?sslmode=disable
+      DB_SSL_MODE: enable
       DOCKER: true
 
     services:
