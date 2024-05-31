@@ -5,13 +5,12 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/xsadia/secred/graph/model"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 )
 
 var ErrAuthorizationRequired = errors.New("authorization required")
 
-func AuthenticateUser(ctx context.Context, db *sql.DB) (*model.User, error) {
+func AuthenticateUser(ctx context.Context, db *sql.DB) (*usermodel.User, error) {
 	id := ctx.Value("user")
 	if id == nil {
 		return nil, ErrAuthorizationRequired

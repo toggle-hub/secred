@@ -6,14 +6,32 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/golang-migrate/migrate"
 	"github.com/golang-migrate/migrate/database/postgres"
+	_ "github.com/golang-migrate/migrate/source/file"
+	_ "github.com/lib/pq"
 	"github.com/xsadia/secred/pkg/utils"
 )
 
-func New(host, user, password, name, sll string) (*sql.DB, error) {
+const (
+	defaultMaxIdleConns = 5
+	defaultMaxOpenConns = 10
+	defaultMaxLifetime  = 5
+)
+
+type Storage struct {
+	db            *sql.DB
+	migrationPath string
+	init          bool
+}
+
+var lock = &sync.Mutex{}
+var storage *Storage
+
+func NewDB(host, user, password, name, sll, migrationPath string) (*Storage, error) {
 	connectionString :=
 		fmt.Sprintf(
 			"host=%s user=%s password=%s dbname=%s sslmode=%s",
@@ -29,16 +47,61 @@ func New(host, user, password, name, sll string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	return db, nil
+	storage = &Storage{
+		db:            db,
+		init:          false,
+		migrationPath: utils.Or(migrationPath, "file://./migrations"),
+	}
+
+	if err := storage.config(); err != nil {
+		storage.db.Close()
+		return nil, err
+	}
+
+	return storage, nil
 }
 
-const (
-	defaultMaxIdleConns = 5
-	defaultMaxOpenConns = 10
-	defaultMaxLifetime  = 5
-)
+func Close() {
+	if storage == nil {
+		return
+	}
 
-func ConfigDB(db *sql.DB) {
+	storage.db.Close()
+}
+
+func GetInstance() (*Storage, error) {
+	if storage != nil {
+		return storage, nil
+	}
+
+	lock.Lock()
+	defer lock.Unlock()
+
+	newStorage, err := NewDB("localhost",
+		"root",
+		"root",
+		"secred",
+		"disable",
+		"",
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	storage = newStorage
+	return storage, nil
+}
+
+func (s *Storage) DB() *sql.DB {
+	return s.db
+}
+
+func (s *Storage) config() error {
+	if s.init {
+		return nil
+	}
+
+	s.init = true
 	maxIdleConns, err := strconv.Atoi(os.Getenv("POSTGRES_MAX_IDLE_CONNS"))
 	if err != nil {
 		maxIdleConns = defaultMaxIdleConns
@@ -54,19 +117,25 @@ func ConfigDB(db *sql.DB) {
 		maxLifetime = defaultMaxLifetime
 	}
 
-	db.SetMaxIdleConns(maxIdleConns)
-	db.SetMaxOpenConns(maxOpenConns)
-	db.SetConnMaxLifetime(time.Second * time.Duration(maxLifetime))
+	s.db.SetMaxIdleConns(maxIdleConns)
+	s.db.SetMaxOpenConns(maxOpenConns)
+	s.db.SetConnMaxLifetime(time.Second * time.Duration(maxLifetime))
+
+	return s.migrate()
 }
 
-func Migrate(db *sql.DB) error {
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+func (s *Storage) SetMigrationPath(path string) {
+	s.migrationPath = path
+}
+
+func (s *Storage) migrate() error {
+	driver, err := postgres.WithInstance(storage.db, &postgres.Config{})
 	if err != nil {
 		return err
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://./migrations",
+		s.migrationPath,
 		"postgres", driver)
 	if err != nil {
 		return err
