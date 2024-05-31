@@ -27,7 +27,14 @@ type AuthHandlerTestSuite struct {
 
 func (suite *AuthHandlerTestSuite) SetupTest() {
 	godotenv.Load("../../../.env")
-	storage, err := database.NewDB("", "", "", "secred_test", "", "file://../../../migrations")
+	storage, err := database.NewDB(
+		"localhost",
+		"root",
+		"root",
+		"secred_test",
+		"disable",
+		"file://../../../migrations",
+	)
 	if err != nil {
 		log.Fatalf("failed to start test database %v", err.Error())
 	}

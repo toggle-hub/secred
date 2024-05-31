@@ -31,7 +31,7 @@ type Storage struct {
 var lock = &sync.Mutex{}
 var storage *Storage
 
-func NewDB(host, user, password, name, sll, migrationPath string) (*Storage, error) {
+func NewDB(host, user, password, name, ssl, migrationPath string) (*Storage, error) {
 	connectionString :=
 		fmt.Sprintf(
 			"host=%s user=%s password=%s dbname=%s sslmode=%s",
@@ -39,7 +39,7 @@ func NewDB(host, user, password, name, sll, migrationPath string) (*Storage, err
 			utils.Or(os.Getenv("DB_USER"), user),
 			utils.Or(os.Getenv("DB_PASSWORD"), password),
 			utils.Or(os.Getenv("DB_NAME"), name),
-			utils.Or(os.Getenv("DB_SLL_MODE"), sll),
+			utils.Or(os.Getenv("DB_SSL_MODE"), ssl),
 		)
 
 	db, err := sql.Open("postgres", connectionString)
