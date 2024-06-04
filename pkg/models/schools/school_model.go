@@ -1,93 +1,103 @@
 package schoolmodel
 
-// import (
-// 	"database/sql"
-// 	"fmt"
-// 	"log"
+import (
+	"database/sql"
+	"log"
+	"time"
 
-// 	"github.com/xsadia/secred/graph/model"
-// 	"github.com/xsadia/secred/pkg/utils"
-// )
+	"github.com/xsadia/secred/pkg/utils"
+)
 
-// type SchoolModel struct {
-// 	db *sql.DB
-// }
+type SchoolModel struct {
+	db *sql.DB
+}
 
-// func (sm *SchoolModel) FindById(id string) (*model.School, error) {
-// 	var school model.School
-// 	err := sm.db.QueryRow(
-// 		"SELECT * FROM schools WHERE id = $1 AND deleted_at IS NULL",
-// 		id,
-// 	).Scan(
-// 		&school.ID,
-// 		&school.Name,
-// 		&school.Address,
-// 		&school.PhoneNumber,
-// 		&school.CreatedAt,
-// 		&school.UpdatedAt,
-// 		&school.DeletedAt,
-// 	)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+type School struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Address     *string `json:"address,omitempty"`
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
+	// Orders      []*Order   `json:"orders"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
+}
 
-// 	return &school, nil
-// }
+func (sm *SchoolModel) FindById(id string) (*School, error) {
+	var school School
+	err := sm.db.QueryRow(
+		"SELECT * FROM schools WHERE id = $1 AND deleted_at IS NULL",
+		id,
+	).Scan(
+		&school.ID,
+		&school.Name,
+		&school.Address,
+		&school.PhoneNumber,
+		&school.CreatedAt,
+		&school.UpdatedAt,
+		&school.DeletedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
 
-// func (sm *SchoolModel) Create(input model.CreateSchoolInput) (*model.School, error) {
-// 	school := model.School{
-// 		Name:        input.Name,
-// 		Address:     input.Address,
-// 		PhoneNumber: input.PhoneNumber,
-// 	}
-// 	row := sm.db.QueryRow(
-// 		"INSERT INTO schools (name, address, phone_number) VALUES ($1, $2, $3) returning id, created_at, updated_at",
-// 		input.Name, input.Address, input.PhoneNumber)
+	return &school, nil
+}
 
-// 	err := utils.ParseDuplicateError(row.Scan(&school.ID, &school.CreatedAt, &school.UpdatedAt), "school name already in use")
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (sm *SchoolModel) Create(name string, address *string, phoneNumber *string) (*School, error) {
+	school := School{
+		Name:        name,
+		Address:     address,
+		PhoneNumber: phoneNumber,
+	}
+	row := sm.db.QueryRow(
+		"INSERT INTO schools (name, address, phone_number) VALUES ($1, $2, $3) returning id, created_at, updated_at",
+		name, address, phoneNumber)
 
-// 	return &school, nil
-// }
+	err := utils.ParseDuplicateError(row.Scan(&school.ID, &school.CreatedAt, &school.UpdatedAt), "school name already in use")
+	if err != nil {
+		return nil, err
+	}
 
-// func (sm *SchoolModel) LoadMany(page, limit int) ([]*model.School, bool) {
-// 	var results []*model.School
-// 	offset := (page - 1) * limit
-// 	rows, err := sm.db.Query("SELECT * FROM schools WHERE deleted_at IS NULL LIMIT $1 OFFSET $2", limit+1, offset)
-// 	if err != nil {
-// 		log.Println("Error fetching items: ", err.Error())
-// 		return nil, false
-// 	}
+	return &school, nil
+}
 
-// 	for rows.Next() {
-// 		var item model.School
-// 		if err := rows.Scan(
-// 			&item.ID,
-// 			&item.Name,
-// 			&item.Address,
-// 			&item.PhoneNumber,
-// 			&item.CreatedAt,
-// 			&item.UpdatedAt,
-// 			&item.DeletedAt,
-// 		); err != nil {
-// 			return nil, false
-// 		}
+func (sm *SchoolModel) LoadMany(page, limit int) ([]*School, bool) {
+	var results []*School
+	offset := (page - 1) * limit
+	rows, err := sm.db.Query("SELECT * FROM schools WHERE deleted_at IS NULL LIMIT $1 OFFSET $2", limit+1, offset)
+	if err != nil {
+		log.Println("Error fetching items: ", err.Error())
+		return nil, false
+	}
 
-// 		results = append(results, &item)
-// 	}
+	for rows.Next() {
+		var item School
+		if err := rows.Scan(
+			&item.ID,
+			&item.Name,
+			&item.Address,
+			&item.PhoneNumber,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+			&item.DeletedAt,
+		); err != nil {
+			return nil, false
+		}
 
-// 	if len(results) < 1 {
-// 		return nil, false
-// 	}
+		results = append(results, &item)
+	}
 
-// 	if len(results) > limit {
-// 		return results[:limit], true
-// 	}
+	if len(results) < 1 {
+		return nil, false
+	}
 
-// 	return results, false
-// }
+	if len(results) > limit {
+		return results[:limit], true
+	}
+
+	return results, false
+}
 
 // func (sm *SchoolModel) CreateMany(input []model.CreateSchoolInput) error {
 // 	query := "INSERT INTO schools (name, address, phone_number) VALUES "
@@ -106,8 +116,8 @@ package schoolmodel
 // 	return err
 // }
 
-// func New(db *sql.DB) *SchoolModel {
-// 	return &SchoolModel{
-// 		db,
-// 	}
-// }
+func New(db *sql.DB) *SchoolModel {
+	return &SchoolModel{
+		db,
+	}
+}

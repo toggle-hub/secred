@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"context"
 	"errors"
 	"log"
 	"os"
@@ -48,8 +47,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 				return next(c)
 			}
 
-			ctx := context.WithValue(c.Request().Context(), "user", sub)
-			c.SetRequest(c.Request().WithContext(ctx))
+			c.Set("user", sub)
 			return next(c)
 		}
 

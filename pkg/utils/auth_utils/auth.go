@@ -1,17 +1,18 @@
 package authutils
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 
+	"github.com/labstack/echo/v4"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 )
 
 var ErrAuthorizationRequired = errors.New("authorization required")
 
-func AuthenticateUser(ctx context.Context, db *sql.DB) (*usermodel.User, error) {
-	id := ctx.Value("user")
+func AuthenticateUser(c echo.Context, db *sql.DB) (*usermodel.User, error) {
+
+	id := c.Get("user")
 	if id == nil {
 		return nil, ErrAuthorizationRequired
 	}
