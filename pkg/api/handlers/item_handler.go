@@ -81,3 +81,54 @@ func CreateItemHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, updatedItem)
 }
+
+type ListItemsQueryParams struct {
+	Page  int `query:"page"`
+	Limit int `query:"limit"`
+}
+
+type ListItemsResponseBody struct {
+	Data        []*itemmodel.Item `json:"data"`
+	HasNextPage bool              `json:"hasNextPage"`
+}
+
+func ListItemsHandler(c echo.Context) error {
+	storage, err := database.GetInstance()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, HttpError{
+			Message: "something went wrong",
+		})
+	}
+
+	db := storage.DB()
+	_, err = authutils.AuthenticateUser(c, db)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, HttpError{
+			Message: err.Error(),
+		})
+	}
+
+	queryParams := new(ListItemsQueryParams)
+	if err := c.Bind(queryParams); err != nil {
+		return c.JSON(http.StatusBadRequest, HttpError{
+			Message: "bad request",
+		})
+	}
+
+	page := queryParams.Page
+	limit := queryParams.Limit
+	if queryParams.Page < 1 {
+		page = 1
+	}
+
+	if queryParams.Limit < 1 {
+		limit = 10
+	}
+
+	itemModel := itemmodel.New(db)
+	items, hasNextPage := itemModel.FindMany(page, limit)
+	return c.JSON(http.StatusOK, ListItemsResponseBody{
+		Data:        items,
+		HasNextPage: hasNextPage,
+	})
+}

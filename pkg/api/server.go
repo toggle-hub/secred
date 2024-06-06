@@ -24,6 +24,7 @@ func (s *Server) init() {
 	s.server.POST("/login", handlers.LoginHandler)
 	s.server.POST("/schools", handlers.CreateSchoolHandler)
 	s.server.POST("/items", handlers.CreateItemHandler)
+	s.server.GET("/items", handlers.ListItemsHandler)
 }
 
 func New() *Server {
