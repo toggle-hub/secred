@@ -17,6 +17,7 @@ var ErrInvalidToken = errors.New("invalid token")
 func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		ah := c.Request().Header.Get("Authorization")
+		log.Println("--------------------------->", ah, echo.HeaderAuthorization)
 		if ah == "" {
 			return next(c)
 		}
