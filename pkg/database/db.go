@@ -35,11 +35,11 @@ func NewDB(host, user, password, name, ssl, migrationPath string) (*Storage, err
 	connectionString :=
 		fmt.Sprintf(
 			"host=%s user=%s password=%s dbname=%s sslmode=%s",
-			utils.Or(os.Getenv("DB_HOST"), host),
-			utils.Or(os.Getenv("DB_USER"), user),
-			utils.Or(os.Getenv("DB_PASSWORD"), password),
-			utils.Or(os.Getenv("DB_NAME"), name),
-			utils.Or(os.Getenv("DB_SSL_MODE"), ssl),
+			host,
+			user,
+			password,
+			name,
+			ssl,
 		)
 
 	db, err := sql.Open("postgres", connectionString)
