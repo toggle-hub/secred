@@ -69,6 +69,7 @@ func (suite *SchoolHandlerTestSuite) TestCreateSchoolSuccess() {
 	request := httptest.NewRequest(http.MethodPost, "/school", bytes.NewBuffer(requestBody))
 	request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	request.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
+	log.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "Bearer "+token)
 	recorder := httptest.NewRecorder()
 
 	suite.server.ServeHTTP(recorder, request)
