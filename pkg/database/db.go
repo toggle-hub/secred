@@ -77,11 +77,12 @@ func GetInstance() (*Storage, error) {
 	lock.Lock()
 	defer lock.Unlock()
 
-	newStorage, err := NewDB("localhost",
-		"root",
-		"root",
-		"secred",
-		"disable",
+	newStorage, err := NewDB(
+		utils.Or(os.Getenv("DB_HOST"), "localhost"),
+		utils.Or(os.Getenv("DB_USER"), "root"),
+		utils.Or(os.Getenv("DB_PASSWORD"), "root"),
+		utils.Or(os.Getenv("DB_NAME"), "secred"),
+		utils.Or(os.Getenv("DB_SSL_MODE"), "disable"),
 		"",
 	)
 	if err != nil {
