@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"os"
 	"time"
 
@@ -24,7 +23,6 @@ func CreateJWT(id string, expireAt time.Duration) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	log.Println("-------------------------->", key, id)
 
 	return signedToken, nil
 }
