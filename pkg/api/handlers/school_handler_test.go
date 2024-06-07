@@ -16,6 +16,7 @@ import (
 	"github.com/xsadia/secred/pkg/api/handlers"
 	"github.com/xsadia/secred/pkg/database"
 	"github.com/xsadia/secred/pkg/middlewares"
+	schoolmodel "github.com/xsadia/secred/pkg/models/schools"
 	usermodel "github.com/xsadia/secred/pkg/models/user_model"
 	"github.com/xsadia/secred/pkg/utils"
 )
@@ -69,19 +70,17 @@ func (suite *SchoolHandlerTestSuite) TestCreateSchoolSuccess() {
 	request := httptest.NewRequest(http.MethodPost, "/school", bytes.NewBuffer(requestBody))
 	request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 	request.Header.Set(echo.HeaderAuthorization, "Bearer "+token)
-	log.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "Bearer "+token)
 	recorder := httptest.NewRecorder()
 
 	suite.server.ServeHTTP(recorder, request)
-	var response map[string]interface{}
+	var response schoolmodel.School
 	assert.Equal(t, http.StatusCreated, recorder.Code)
 	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
 
-	log.Println("===============================>", response)
-	// school, err := schoolmodel.New(suite.db).FindById(response.ID)
+	school, err := schoolmodel.New(suite.db).FindById(response.ID)
 	assert.NoError(t, err)
-	// assert.Equal(t, school.Name, response.Name)
-	// assert.Equal(t, school.ID, response.ID)
+	assert.Equal(t, school.Name, response.Name)
+	assert.Equal(t, school.ID, response.ID)
 }
 
 func TestSchoolHandlerTestSuite(t *testing.T) {
