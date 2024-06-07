@@ -77,6 +77,7 @@ func (suite *SchoolHandlerTestSuite) TestCreateSchoolSuccess() {
 	assert.Equal(t, http.StatusCreated, recorder.Code)
 	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
 
+	log.Println("===============================>", response, response.ID)
 	school, err := schoolmodel.New(suite.db).FindById(response.ID)
 	assert.NoError(t, err)
 	assert.Equal(t, school.Name, response.Name)
