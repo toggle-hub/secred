@@ -26,8 +26,8 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			secretKey := []byte(utils.Or(os.Getenv("JWT_SECRET"), "secret-key"))
 
+			log.Println("============================>", token.Method.Alg())
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				log.Println("============================>", token.Method.Alg())
 				log.Println("Client error",
 					ErrInvalidSignMethod)
 				return nil, ErrInvalidSignMethod
