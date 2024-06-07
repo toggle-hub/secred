@@ -18,30 +18,12 @@ func main() {
 	godotenv.Load()
 	port := utils.Or(os.Getenv("PORT"), defaultPort)
 
-	// db, err := database.New(
-	// 	"localhost",
-	// 	"root",
-	// 	"root",
-	// 	"secred",
-	// 	"disable",
-	// )
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer db.Close()
-
-	// database.ConfigDB(db)
-	// if err := db.Ping(); err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// if err := database.Migrate(db); err != nil {
-	// 	log.Fatal(err)
-	// }
-	_, err := database.GetInstance()
+	storage, err := database.GetInstance()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	defer storage.DB().Close()
 
 	app := api.New()
 	app.Listen(":" + port)

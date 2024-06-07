@@ -17,6 +17,7 @@ type User struct {
 	ID        string     `json:"id"`
 	Name      string     `json:"name"`
 	Email     string     `json:"email"`
+	Password  string     `json:"-"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"deletedAt,omitempty"`
@@ -25,9 +26,9 @@ type User struct {
 func (um *UserModel) FindByEmail(email string) (*User, error) {
 	var user User
 	err := um.db.QueryRow(
-		"SELECT id, name, email, created_at, updated_at, deleted_at FROM users where email = $1",
+		"SELECT id, name, email, password, created_at, updated_at, deleted_at FROM users where email = $1",
 		email,
-	).Scan(&user.ID, &user.Name, &user.Email, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
+	).Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
 
 	if err != nil {
 		return nil, err

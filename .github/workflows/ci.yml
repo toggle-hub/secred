@@ -31,7 +31,7 @@ jobs:
       DB_NAME: secred_test
       DB_URL: postgresql://root:root@localhost:5432/secred_test?sslmode=disable
       DB_SSL_MODE: disable
-      DOCKER: true
+      JWT_SECRET: secret-key
 
     services:
       postgres:

@@ -14,8 +14,6 @@ type HealthResponse struct {
 	Healthy bool `json:"healthy"`
 }
 
-func HealthZHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		return c.JSON(http.StatusOK, HealthResponse{true})
-	}
+func HealthZHandler(c echo.Context) error {
+	return c.JSON(http.StatusOK, HealthResponse{true})
 }

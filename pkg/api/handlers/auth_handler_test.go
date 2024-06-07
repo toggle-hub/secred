@@ -42,7 +42,8 @@ func (suite *AuthHandlerTestSuite) SetupTest() {
 	suite.db = storage.DB()
 	suite.server = echo.New()
 
-	suite.server.POST("/register", handlers.RegisterHandler())
+	suite.server.POST("/register", handlers.RegisterHandler)
+	suite.server.POST("/login", handlers.LoginHandler)
 }
 
 func (suite *AuthHandlerTestSuite) AfterTest(_, _ string) {
@@ -65,13 +66,73 @@ func (suite *AuthHandlerTestSuite) TestRegisterSuccess() {
 	recorder := httptest.NewRecorder()
 
 	suite.server.ServeHTTP(recorder, request)
-	var response handlers.RegisterResponseBody
+	var response handlers.AuthResponseBody
 	assert.Equal(t, http.StatusCreated, recorder.Code)
 	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
 
 	_, err := usermodel.New(suite.db).FindByEmail(response.User.Email)
 	assert.NoError(t, err)
 	assert.Equal(t, "fizi@gmail.com", response.User.Email)
+}
+func (suite *AuthHandlerTestSuite) TestRegisterConflict() {
+	t := suite.T()
+	userModel := usermodel.New(suite.db)
+	userModel.Create("fizi@gmail.com", "fizi", "123123123")
+
+	requestBody := []byte(`{
+		"email": "fizi@gmail.com",
+		"name": "fizi1",
+		"password": "123123123"
+	}`)
+
+	request := httptest.NewRequest(http.MethodPost, "/register", bytes.NewBuffer(requestBody))
+	request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recorder := httptest.NewRecorder()
+
+	suite.server.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusConflict, recorder.Code)
+}
+
+func (suite *AuthHandlerTestSuite) TestLoginSuccess() {
+	t := suite.T()
+	requestBody := []byte(`{
+		"email": "fizi@gmail.com",
+		"password": "123123123"
+	}`)
+
+	userModel := usermodel.New(suite.db)
+	userModel.Create("fizi@gmail.com", "fizi", "123123123")
+
+	request := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(requestBody))
+	request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recorder := httptest.NewRecorder()
+
+	suite.server.ServeHTTP(recorder, request)
+	var response handlers.AuthResponseBody
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
+
+	_, err := userModel.FindByEmail(response.User.Email)
+	assert.NoError(t, err)
+	assert.Equal(t, "fizi@gmail.com", response.User.Email)
+}
+
+func (suite *AuthHandlerTestSuite) TestLoginWrongPassword() {
+	t := suite.T()
+	requestBody := []byte(`{
+		"email": "fizi@gmail.com",
+		"password": "123123122"
+	}`)
+
+	userModel := usermodel.New(suite.db)
+	userModel.Create("fizi@gmail.com", "fizi", "123123123")
+
+	request := httptest.NewRequest(http.MethodPost, "/login", bytes.NewBuffer(requestBody))
+	request.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	recorder := httptest.NewRecorder()
+
+	suite.server.ServeHTTP(recorder, request)
+	assert.Equal(t, http.StatusUnauthorized, recorder.Code)
 }
 
 func TestAuthHandlerTestSuite(t *testing.T) {

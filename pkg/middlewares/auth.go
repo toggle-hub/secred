@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"context"
 	"errors"
 	"log"
 	"os"
@@ -17,7 +16,7 @@ var ErrInvalidToken = errors.New("invalid token")
 
 func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		ah := c.Request().Header.Get("Authorization")
+		ah := c.Request().Header.Get(echo.HeaderAuthorization)
 		if ah == "" {
 			return next(c)
 		}
@@ -48,8 +47,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 				return next(c)
 			}
 
-			ctx := context.WithValue(c.Request().Context(), "user", sub)
-			c.SetRequest(c.Request().WithContext(ctx))
+			c.Set("user", sub)
 			return next(c)
 		}
 
