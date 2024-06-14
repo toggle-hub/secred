@@ -10,12 +10,12 @@ type OrderModel struct {
 }
 
 type Order struct {
-	ID          string
-	InvoiceUrl  *string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeliveredAt *time.Time
-	DeletedAt   *time.Time
+	ID          string     `json:"id"`
+	InvoiceUrl  *string    `json:"invoiceUrl"`
+	CreatedAt   time.Time  `json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+	DeliveredAt *time.Time `json:"deliveredAt"`
+	DeletedAt   *time.Time `json:"deletedAt"`
 }
 
 func (om *OrderModel) Create(invoiceUrl *string) (*Order, error) {

@@ -117,11 +117,11 @@ func ListItemsHandler(c echo.Context) error {
 
 	page := queryParams.Page
 	limit := queryParams.Limit
-	if queryParams.Page < 1 {
+	if page < 1 {
 		page = 1
 	}
 
-	if queryParams.Limit < 1 {
+	if limit < 1 {
 		limit = 10
 	}
 

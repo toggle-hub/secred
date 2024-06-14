@@ -57,3 +57,54 @@ func CreateSchoolHandler(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, school)
 }
+
+type ListSchoolQueryParams struct {
+	Page  int `query:"page"`
+	Limit int `query:"limit"`
+}
+
+type ListSchoolsResponseBody struct {
+	Data        []*schoolmodel.School `json:"data"`
+	HasNextPage bool                  `json:"hasNextPage"`
+}
+
+func ListSchoolHandler(c echo.Context) error {
+	storage, err := database.GetInstance()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, HttpError{
+			Message: "something went wrong",
+		})
+	}
+
+	db := storage.DB()
+	_, err = authutils.AuthenticateUser(c, db)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, HttpError{
+			Message: err.Error(),
+		})
+	}
+
+	queryParams := new(ListSchoolQueryParams)
+	if err := c.Bind(queryParams); err != nil {
+		return c.JSON(http.StatusBadRequest, HttpError{
+			Message: "bad request",
+		})
+	}
+
+	page := queryParams.Page
+	limit := queryParams.Limit
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+
+	schoolModel := schoolmodel.New(db)
+	schools, hasNextPage := schoolModel.LoadMany(page, limit)
+	return c.JSON(http.StatusOK, ListSchoolsResponseBody{
+		Data:        schools,
+		HasNextPage: hasNextPage,
+	})
+}

@@ -22,9 +22,18 @@ func (s *Server) init() {
 	s.server.GET("/healthz", handlers.HealthZHandler)
 	s.server.POST("/register", handlers.RegisterHandler)
 	s.server.POST("/login", handlers.LoginHandler)
-	s.server.POST("/schools", handlers.CreateSchoolHandler)
-	s.server.POST("/items", handlers.CreateItemHandler)
-	s.server.GET("/items", handlers.ListItemsHandler)
+
+	schoolGroup := s.server.Group("/schools")
+	schoolGroup.POST("", handlers.CreateSchoolHandler)
+	schoolGroup.GET("", handlers.ListSchoolHandler)
+	schoolGroup.POST("/:id/orders", handlers.CreateSchoolOrderHandler)
+
+	itemGroup := s.server.Group("/items")
+	itemGroup.POST("", handlers.CreateItemHandler)
+	itemGroup.GET("", handlers.ListItemsHandler)
+
+	orderGroup := s.server.Group("/orders")
+	orderGroup.POST("", handlers.CreateOrderHandler)
 }
 
 func New() *Server {
